@@ -644,7 +644,7 @@ try{S=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){S=null;}
 if(!S||S.v!==6)S=seed();
 /* views scoped to the signed-in account; not saved (non-enumerable) */
 function bindS(){
- Object.defineProperty(S,'trainer',{configurable:true,enumerable:false,get(){return S.trainers.find(t=>t.id===S.me);}});
+ Object.defineProperty(S,'trainer',{configurable:true,enumerable:false,get(){return S.trainers.find(t=>t.id===S.me)||{id:S.me,name:'Trenér',spec:'',code:'',email:'',photo:null};}});
  Object.defineProperty(S,'clients',{configurable:true,enumerable:false,get(){return S.clientsAll.filter(c=>c.trainerId===S.me);}});
  Object.defineProperty(S,'templates',{configurable:true,enumerable:false,get(){return S.templatesAll.filter(t=>t.tr===S.me);},set(v){S.templatesAll=S.templatesAll.filter(t=>t.tr!==S.me).concat(v);}});
 }
@@ -803,6 +803,7 @@ function scrClient(id){
   h+='<div class="glass card stack" style="gap:10px"><div class="row" style="gap:8px">'+ic('lock',16)+'<span class="small muted">Soukromé poznámky vidíš jen ty.</span></div><textarea class="input" id="note-new" data-in="noteDraft" placeholder="Např. omezení, preference, plán na další blok…"></textarea><button class="btn ink sm" style="align-self:flex-end" data-a="addnote" data-v="'+id+'">Uložit poznámku</button></div>';
   h+=ns.length?'<div class="stack" style="gap:10px">'+ns.slice().sort((a,b)=>b.at.localeCompare(a.at)).map(n=>'<div class="glass card stack" style="gap:6px"><div class="row between"><span class="tiny faint">'+fmtDL(n.at)+(n.sessionId?' · k tréninku':'')+'</span><button class="iconbtn sm" data-a="delnote" data-v="'+id+':'+n.id+'" aria-label="Smazat poznámku">'+ic('trash',17)+'</button></div><div style="line-height:1.45;white-space:pre-wrap">'+esc(n.text)+'</div></div>').join('')+'</div>':'';
  }
+ h+='<button class="btn danger block" style="margin-top:10px" data-a="rmclient" data-v="'+id+'">'+ic('logout',18)+' Odebrat svěřence</button>';
  h+='</div></div>';return h;
 }
 
@@ -1021,6 +1022,7 @@ function scrTrainer(id){
  h+='<div class="sec"><h3>Klienti trenéra</h3><span class="tiny faint">'+st.n+'</span></div>';
  h+=st.n?'<div class="glass list">'+st.cs.map(c=>{const d=lastDays(c.id);return '<div class="li">'+avatar(c,40)+'<div class="grow"><div class="ellip" style="font-weight:500">'+esc(c.name)+'</div><div class="tiny muted ellip">'+esc(c.goal)+'</div><div class="tiny faint">'+(d===null?'Zatím bez tréninku':'Trénoval(a) '+rel(sessOf(c.id)[0].date))+'</div></div>'+ring(adherence(c.id),38)+'</div>';}).join('')+'</div>':'<div class="glass card empty">Trenér zatím nemá žádné klienty.</div>';
  h+='<p class="tiny faint" style="text-align:center;margin:4px 20px">Vidíš přehled a docházku. Poznámky a chat mezi trenérem a klientem zůstávají soukromé.</p>';
+ if(!t.owner&&t.id!==S.me)h+='<button class="btn danger block" data-a="rmtrainer" data-v="'+t.id+'">'+ic('logout',18)+' Odebrat trenéra</button>';
  h+='</div></div>';return h;
 }
 function sw(on,a,v,dis){return '<button class="sw'+(on?' on':'')+'" role="switch" aria-checked="'+(on?'true':'false')+'" data-a="'+a+'" data-v="'+v+'"'+(dis?' disabled':'')+'><i></i></button>';}
@@ -1084,6 +1086,11 @@ function scrMissing(){return '<div class="view detail">'+nav('')+'<div class="em
 /* ---------- client app ---------- */
 function isC(){return S.role==='client';}
 function me(){return client(S.cme);}
+function detachClient(id){const c=client(id);if(!c)return;c.trainerId=null;S.assign=S.assign.filter(a=>a.clientId!==id);S.notes[id]=[];S.messages[id]=[];}
+function leaveScreens(ids){UI.stack=UI.stack.filter(x=>!ids.some(id=>x.endsWith(':'+id)));}
+function removeClient(id){const c=client(id);if(!c)return;detachClient(id);save();leaveScreens([id]);render('pop');toast(c.name+' už není tvůj svěřenec');}
+function removeTrainer(id){const t=S.trainers.find(x=>x.id===id);if(!t)return;const cs=S.clientsAll.filter(c=>c.trainerId===id).map(c=>c.id);cs.forEach(detachClient);
+ S.trainers=S.trainers.filter(x=>x.id!==id);S.templatesAll=S.templatesAll.filter(x=>x.tr!==id);S.exCustom=(S.exCustom||[]).filter(x=>x.tr!==id);save();leaveScreens([id].concat(cs));render('pop');toast('Trenér '+t.name+' byl odebrán');}
 function cUnread(){return (S.messages[S.cme]||[]).filter(m=>m.by==='trainer'&&m.cread===false).length;}
 function msgOut(o){const c=isC();return Object.assign({id:uid(),by:c?'client':'trainer',at:new Date().toISOString(),read:!c,cread:c?true:false},o);}
 function myPlan(){const seen={};return S.assign.filter(a=>a.clientId===S.cme).sort((a,b)=>b.date.localeCompare(a.date)).filter(a=>{if(seen[a.templateId]||!tpl(a.templateId))return false;seen[a.templateId]=1;return true;});}
@@ -1095,6 +1102,12 @@ function trComments(){const out=[];sessOf(S.cme).slice(0,12).forEach(s=>s.commen
 function tplCard(t,extra){const media=t.ex.reduce((a,e)=>a+e.media.length,0);
  return '<button class="glass card stack" style="text-align:left;gap:10px" data-a="open" data-v="template:'+t.id+'"><div class="row between">'+catpill(t.cat)+(extra||'')+'</div><div><div class="title-m">'+esc(t.name)+'</div><div class="small muted" style="margin-top:3px;line-height:1.4">'+esc(t.ex.map(e=>e.name).join(' · '))+'</div></div><div class="row tiny muted" style="gap:14px;flex-wrap:wrap"><span class="row" style="gap:4px">'+ic('dumbbell',15)+t.ex.length+' '+pl(t.ex.length,'cvik','cviky','cviků')+' · '+setCount(t)+' sérií</span>'+(media?'<span class="row" style="gap:4px">'+ic('image',15)+media+' médií</span>':'')+'</div></button>';}
 
+function scrCNoTrainer(){const c=me();
+ let h='<div class="view" id="view"><div class="stack" style="padding-top:36px;align-items:center;text-align:center;gap:14px">'+avatar(c,84)+'<span class="eyebrow">Bez trenéra</span><h1 class="title-xl">Zatím nemáš trenéra</h1><p class="muted" style="margin:0;line-height:1.5;max-width:310px">Už nejsi propojený(á) s žádným trenérem. Historie tréninků i váhy ti zůstala. Zadej kód nového trenéra a hned se propojíte.</p></div>';
+ h+='<div class="glass card stack" style="margin-top:18px"><input class="input num" id="nt-code" data-in="ccode" value="'+esc(UI.ccode||'')+'" placeholder="Kód trenéra" maxlength="8" autocomplete="off" style="letter-spacing:.12em;font-weight:600;font-size:20px;text-align:center'+(UI.ccodeErr?';border-color:var(--bad)':'')+'">'+(UI.ccodeErr?'<div class="small" style="color:var(--bad)">'+esc(UI.ccodeErr)+'</div>':'<span class="tiny faint">Kód ti pošle trenér. Najde ho ve svém profilu.</span>')+'<button class="btn ink block" data-a="ccodesave">Připojit k trenérovi</button></div>';
+ h+='<div class="glass list" style="margin-top:6px"><button class="li plain" data-a="open" data-v="settings"><span class="iconbtn sm" style="background:var(--chip)">'+ic('gear',18)+'</span><span class="grow" style="font-weight:500">Nastavení</span>'+ic('chev',18)+'</button><button class="li plain" data-a="open" data-v="report"><span class="iconbtn sm" style="background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)">'+ic('bug',18)+'</span><span class="grow" style="font-weight:500">Nahlásit problém</span>'+ic('chev',18)+'</button><button class="li plain" data-a="logout" style="color:var(--bad)"><span class="grow">Odhlásit se</span>'+ic('logout',18)+'</button></div>';
+ h+=demoSwitch();
+ h+='</div>';return h;}
 function scrCHome(){
  const c=me(),t=S.trainer,ss=sessOf(c.id);const wk=ss.filter(s=>daysAgo(s.date)<7).length,a=adherence(c.id);
  const hr=now.getHours();const hi=hr<10?'Dobré ráno':hr<18?'Ahoj':'Dobrý večer';
@@ -1292,7 +1305,8 @@ function render(anim){
  if(!S.authed){h=scrAuth();}
  else{
   const top=current();
-  if(isC()){
+  if(isC()&&me()&&!me().trainerId&&!(top==='settings'||top==='report')){S.active=null;h=scrCNoTrainer();}
+  else if(isC()){
    if(top){const [k,id]=top.split(':');
     h=k==='session'?scrSession(id):k==='template'?scrTemplate(id):k==='chat'?scrChat(id):k==='workout'?scrWorkout():k==='coach'?scrCoach():k==='settings'?scrSettings():k==='report'?scrReport():scrMissing();}
    else h=UI.tab==='plan'?scrCPlan():UI.tab==='progress'?scrCProgress():UI.tab==='chat'?scrCChats():UI.tab==='profile'?scrCProfile():scrCHome();
@@ -1383,6 +1397,10 @@ const A={
   if(!S.assign.some(a=>a.templateId===tid&&a.clientId===cid))S.assign.push({id:uid(),templateId:tid,clientId:cid,date:new Date().toISOString(),note:'',done:false});
   save();UI.sheet=null;render('bottom');clientReply(cid,'Díky, '+t.name+' mám v plánu 👍');},
  confirm(){const r=UI.sheet.run;UI.sheet=null;r();},
+ rmclient(id){const c=client(id);if(!c)return;const n=c.name.split(' ')[0];
+  UI.sheet={type:'confirm',title:'Odebrat '+c.name+'?',text:n+' se od tebe odpojí. Smažou se přiřazené tréninky, vaše zprávy a tvoje poznámky k němu/ní. Účet i historie tréninků mu/jí zůstanou a může se připojit k jinému trenérovi.',ok:'Odebrat svěřence',run:()=>removeClient(id)};rerender();},
+ rmtrainer(id){const t=S.trainers.find(x=>x.id===id);if(!t||t.owner||S.role!=='owner')return;const n=S.clientsAll.filter(c=>c.trainerId===id).length;
+  UI.sheet={type:'confirm',title:'Odebrat trenéra '+t.name+'?',text:'Trenér přijde o účet a smažou se jeho šablony a vlastní cviky. '+(n?'Odpojí se i '+(n===1?'jeho 1 klient':'všech jeho '+n+' '+pl(n,'klient','klienti','klientů'))+', smažou se jim přiřazené tréninky a zprávy s trenérem. Historie tréninků klientům zůstane a mohou se připojit k jinému trenérovi.':'Nemá žádné klienty.'),ok:'Odebrat trenéra',run:()=>removeTrainer(id)};rerender();},
  comment(sid){const v=(UI.commentDraft||'').trim();if(!v)return toast('Napiš komentář');const s=S.sessions.find(x=>x.id===sid);s.comments.push(isC()?{id:uid(),by:'client',text:v,at:new Date().toISOString()}:{id:uid(),by:'trainer',text:v,at:new Date().toISOString(),cread:false});UI.commentDraft='';save();toast(isC()?'Odesláno trenérovi':'Komentář odeslán klientovi');},
  sessnote(sid){const v=(UI.commentDraft||'').trim();if(!v)return toast('Napiš text poznámky');const s=S.sessions.find(x=>x.id===sid);(S.notes[s.clientId]=S.notes[s.clientId]||[]).push({id:uid(),text:s.title+' ('+fmtD(s.date)+'): '+v,at:new Date().toISOString(),sessionId:sid});UI.commentDraft='';save();toast('Uloženo do soukromých poznámek');},
  newtpl(){UI.draft=newDraft(null);push('editor');},
@@ -1407,7 +1425,7 @@ const A={
  appsw(v){UI.app=v;UI.authStep='welcome';render();},
  democlient(){S.role='client';S.cme='c2';S.me=client('c2').trainerId;S.authed=true;UI.tab='home';UI.stack=[];save();render('push');toast('Klientská aplikace · '+me().name);},
  asclient(){const keep=S.cme&&client(S.cme)&&client(S.cme).trainerId===S.me?S.cme:(S.clients.find(c=>c.id==='c2')||S.clients[0]||{}).id||'c2';S.role='client';S.cme=keep;S.me=client(keep).trainerId;UI.tab='home';UI.stack=[];UI.sheet=null;save();render('push');toast('Klientská aplikace · '+me().name);},
- astrainer(){S.me=me().trainerId;S.role=S.me==='own'?'owner':'trainer';UI.tab='home';UI.stack=[];UI.sheet=null;save();render('push');toast('Trenérská aplikace · '+S.trainer.name);},
+ astrainer(){S.me=me().trainerId||'own';S.role=S.me==='own'?'owner':'trainer';UI.tab='home';UI.stack=[];UI.sheet=null;save();render('push');toast('Trenérská aplikace · '+S.trainer.name);},
  cpseg(v){UI.cplanSeg=v;rerender();},
  wostart(tid){if(S.active){if(S.active.tid!==tid)toast('Nejdřív dokonči rozběhnutý trénink');UI.sheet=null;push('workout');return;}
   const t=tpl(tid);if(!t)return;const hist=sessOf(S.cme);
@@ -1543,8 +1561,9 @@ app.addEventListener('change',e=>{
 function downscale(src,max){return new Promise(res=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);try{res(c.toDataURL('image/jpeg',.85));}catch(e){res(src);}};img.onerror=()=>res(src);img.src=src;});}
 app.addEventListener('submit',e=>{
  e.preventDefault();const form=e.target;const k=form.getAttribute('data-form');
- if(k==='login'){const em=document.getElementById('l-email').value.trim().toLowerCase();const t=S.trainers.find(x=>x.email.toLowerCase()===em);if(t){S.me=t.id;S.role=t.owner?'owner':'trainer';}else{S.me='tr1';S.role='trainer';}S.authed=true;save();UI.stack=[];render('push');toast('Přihlášeno');}
+ if(k==='login'){const em=document.getElementById('l-email').value.trim().toLowerCase();const t=S.trainers.find(x=>x.email.toLowerCase()===em);if(t){S.me=t.id;S.role=t.owner?'owner':'trainer';}else if(S.trainers.some(x=>x.id==='tr1')){S.me='tr1';S.role='trainer';}else{toast('Tento účet byl odebrán.');return;}S.authed=true;save();UI.stack=[];render('push');toast('Přihlášeno');}
  if(k==='register'){const n=document.getElementById('r-name').value.trim(),em=document.getElementById('r-email').value.trim(),sp=document.getElementById('r-spec').value.trim();
+  if(!S.trainers.some(x=>x.id==='tr1'))S.trainers.push({id:'tr1',name:'Trenér',email:'',spec:'',bio:'',code:genCode(),photo:null,joined:new Date().toISOString()});
   S.role='trainer';S.me='tr1';S.trainer.name=n||S.trainer.name;S.trainer.email=em||S.trainer.email;if(sp)S.trainer.spec=sp;S.trainer.photo=null;S.trainer.code=genCode();save();UI.authStep='code';render('push');}
  if(k==='creg'){const r={code:document.getElementById('cr-code').value,name:document.getElementById('cr-name').value.trim(),goal:document.getElementById('cr-goal').value.trim(),email:document.getElementById('cr-email').value.trim()};UI.creg=r;
   const t=S.trainers.find(x=>x.code===r.code.replace(/\s/g,'').toUpperCase());

@@ -59,9 +59,17 @@ function rpc(name,args){const d=db(),u=uidOf(),s=sess();const norm=c=>String(c||
  const tr=c=>tbl(d,'trainers').find(x=>x.code===norm(c));
  let r={data:null,error:null};
  if(name==='trainer_by_code'){const t=tr(args.p_code);r.data=t?{id:t.id,name:t.data.name,spec:t.data.spec}:null;}
+ else if(name==='register_trainer'&&(d.removed||[]).includes(u)){r.error={message:'account removed'};}
  else if(name==='register_trainer'){if(!tbl(d,'trainers').find(x=>x.id===u)){const row={id:u,code:code(),is_owner:false,data:{name:args.p_name||'Trenér',email:s.user.email,spec:args.p_spec||'',bio:'',photo:null,joined:new Date().toISOString()}};tbl(d,'trainers').push(row);put(d);emit('trainers','INSERT',row);}}
  else if(name==='register_client'){const t=tr(args.p_code);if(!t)r.error={message:'bad code'};else{const row={id:u,trainer_id:t.id,data:{name:args.p_name||'Klient',goal:args.p_goal||'Zatím nevyplněno',email:s.user.email,joined:new Date().toISOString(),target:3,photo:null,status:'active'}};tbl(d,'clients').push(row);put(d);emit('clients','INSERT',row);r.data={id:t.id,name:t.data.name};}}
  else if(name==='change_trainer'){const t=tr(args.p_code);const c=tbl(d,'clients').find(x=>x.id===u);if(!t||!c)r.error={message:'bad code'};else{c.trainer_id=t.id;put(d);emit('clients','UPDATE',c);r.data={id:t.id,name:t.data.name};}}
+ else if(name==='remove_client'||name==='remove_trainer'){
+  const detach=cid=>{['assignments','messages','notes'].forEach(t=>{const del=tbl(d,t).filter(r=>r.client_id===cid);d.t[t]=tbl(d,t).filter(r=>r.client_id!==cid);del.forEach(r=>emit(t,'DELETE',null,{id:r.id}));});const c=tbl(d,'clients').find(x=>x.id===cid);c.trainer_id=null;emit('clients','UPDATE',c);};
+  if(name==='remove_client'){const c=tbl(d,'clients').find(x=>x.id===args.p_client);if(!c||c.trainer_id!==u)r.error={message:'not your client'};else detach(c.id);}
+  else{if(!isOwner(d,u)||args.p_trainer===u)r.error={message:'owner only'};else{const cs=tbl(d,'clients').filter(x=>x.trainer_id===args.p_trainer);cs.forEach(c=>detach(c.id));
+   ['notes','templates','exercises'].forEach(t=>{const del=tbl(d,t).filter(x=>x.trainer_id===args.p_trainer);d.t[t]=tbl(d,t).filter(x=>x.trainer_id!==args.p_trainer);del.forEach(x=>emit(t,'DELETE',null,{id:x.id}));});
+   d.t.trainers=tbl(d,'trainers').filter(x=>x.id!==args.p_trainer);d.removed=(d.removed||[]).concat(args.p_trainer);emit('trainers','DELETE',null,{id:args.p_trainer});r.data={clients:cs.length};}}
+  put(d);}
  else if(name==='regen_code'){const t=tbl(d,'trainers').find(x=>x.id===u);t.code=code();put(d);emit('trainers','UPDATE',t);r.data=t.code;}
  return Promise.resolve(r);}
 function channel(){const h=[];const ch={on(_a,_b,cb){h.push(cb);return ch;},subscribe(){
