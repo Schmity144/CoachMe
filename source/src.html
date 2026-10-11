@@ -1004,12 +1004,12 @@ function scrTrainers(){
  let h='<div class="view" id="view"><div class="stack">';
  h+='<div class="stack" style="gap:4px"><span class="eyebrow row" style="gap:6px">'+ic('lock',13)+'Jen pro majitele</span><h1 class="title-xl">Trenéři</h1></div>';
  h+='<div class="grid2">'
-  +'<div class="glass kpi"><span class="l">Trenérů v aplikaci</span><span class="v num">'+S.trainers.length+'</span><span class="tiny faint">'+S.trainers.filter(t=>daysAgo(t.joined)<=30).length+' nových za 30 dní</span></div>'
-  +'<div class="glass kpi"><span class="l">Klientů celkem</span><span class="v num">'+total+'</span><span class="tiny faint">'+fresh+' nových za 30 dní</span></div>'
+  +'<button class="glass kpi" data-a="scrollto" data-v="trlist" style="text-align:left"><span class="l">Trenérů v aplikaci</span><span class="v num">'+S.trainers.length+'</span><span class="tiny faint">'+S.trainers.filter(t=>daysAgo(t.joined)<=30).length+' nových za 30 dní</span></button>'
+  +'<button class="glass kpi" data-a="open" data-v="allclients" style="text-align:left"><span class="l">Klientů celkem</span><span class="v num">'+total+'</span><span class="tiny faint">'+fresh+' nových za 30 dní</span></button>'
   +'<div class="glass kpi"><span class="l">Tréninky za 7 dní</span><span class="v num">'+w7+'</span><span class="tiny faint">všichni klienti</span></div>'
   +'<div class="glass kpi"><span class="l">Klientů na trenéra</span><span class="v num">'+String(Math.round(total/S.trainers.length*10)/10).replace('.',',')+'</span><span class="tiny faint">průměr</span></div></div>';
  h+='<div class="glass card stack" style="gap:10px"><span class="title-m">Klienti podle trenéra</span>'+rows.map(r=>'<div class="stack" style="gap:4px"><div class="row between small"><span class="ellip">'+esc(r.t.name)+(r.t.id===S.me?' <span class="faint">(ty)</span>':'')+'</span><span class="num" style="font-weight:600">'+r.st.n+'</span></div><div style="height:8px;border-radius:4px;background:var(--chip);overflow:hidden"><div style="height:100%;width:'+(r.st.n/mx*100)+'%;background:var(--accent);border-radius:4px;opacity:'+(r.t.id===S.me?1:.55)+'"></div></div></div>').join('')+'</div>';
- h+='<div class="sec"><h3>Všichni trenéři</h3><span class="tiny faint">'+S.trainers.length+'</span></div><div class="glass list">'+rows.map(r=>{const ss=trStatus(r.t,r.st);return '<button class="li" data-a="'+(r.t.id===S.me?'tab':'opentrainer')+'" data-v="'+(r.t.id===S.me?'clients':r.t.id)+'">'+avatar(r.t,44)+'<div class="grow"><div class="row" style="gap:6px"><span class="ellip" style="font-weight:500">'+esc(r.t.name)+'</span>'+(r.t.owner?'<span class="pill cat cat-sila">Ty</span>':'')+'</div><div class="tiny muted ellip">'+esc(r.t.spec)+'</div><div class="row tiny" style="gap:6px;margin-top:4px"><span class="pill '+ss.c+'">'+ss.t+'</span><span class="faint">'+r.st.w7+' tréninků / 7 dní</span></div></div><div class="stack" style="align-items:center;gap:0;min-width:44px"><span class="num" style="font-size:20px;font-weight:600">'+r.st.n+'</span><span class="tiny faint">'+pl(r.st.n,'klient','klienti','klientů')+'</span></div></button>';}).join('')+'</div>';
+ h+='<div class="sec" id="trlist" style="scroll-margin-top:16px"><h3>Všichni trenéři</h3><span class="tiny faint">'+S.trainers.length+'</span></div><div class="glass list">'+rows.map(r=>{const ss=trStatus(r.t,r.st);return '<button class="li" data-a="'+(r.t.id===S.me?'tab':'opentrainer')+'" data-v="'+(r.t.id===S.me?'clients':r.t.id)+'">'+avatar(r.t,44)+'<div class="grow"><div class="row" style="gap:6px"><span class="ellip" style="font-weight:500">'+esc(r.t.name)+'</span>'+(r.t.owner?'<span class="pill cat cat-sila">Ty</span>':'')+'</div><div class="tiny muted ellip">'+esc(r.t.spec)+'</div><div class="row tiny" style="gap:6px;margin-top:4px"><span class="pill '+ss.c+'">'+ss.t+'</span><span class="faint">'+r.st.w7+' tréninků / 7 dní</span></div></div><div class="stack" style="align-items:center;gap:0;min-width:44px"><span class="num" style="font-size:20px;font-weight:600">'+r.st.n+'</span><span class="tiny faint">'+pl(r.st.n,'klient','klienti','klientů')+'</span></div></button>';}).join('')+'</div>';
  h+='<p class="tiny faint" style="text-align:center;margin:4px 20px">Tuto záložku vidí jen účet majitele. Trenéři mezi sebou ani klienti ji nevidí.</p>';
  h+='</div></div>';return h;
 }
@@ -1063,6 +1063,19 @@ function scrReports(){
  h+='</div></div>';return h;
 }
 function attInfo(c){const weeks=Math.max(1,Math.min(4,Math.ceil((now-new Date(c.joined))/DAY/7)));const done=sessOf(c.id).filter(s=>daysAgo(s.date)<weeks*7).length;return {weeks:weeks,done:done,plan:c.target*weeks,p:adherence(c.id),last:lastDays(c.id)};}
+function scrAllClients(){
+ const q=(UI.acq||'').trim().toLowerCase(),f=UI.acf||'all';
+ const all=S.clientsAll.filter(c=>c.trainerId&&S.trainers.some(t=>t.id===c.trainerId)&&c.status==='active');
+ const tn=c=>(S.trainers.find(t=>t.id===c.trainerId)||{}).name||'';
+ const rows=all.filter(c=>(f==='all'||c.trainerId===f)&&(!q||(c.name+' '+c.goal+' '+tn(c)).toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+ const trs=S.trainers.filter(t=>all.some(c=>c.trainerId===t.id));
+ let h='<div class="view detail" id="view">'+nav('Klienti')+'<div class="stack"><h1 class="title-xl">Všichni klienti</h1><p class="muted" style="margin:-4px 2px 0">'+all.length+' '+pl(all.length,'klient','klienti','klientů')+' u '+trs.length+' '+pl(trs.length,'trenéra','trenérů','trenérů')+'.</p>';
+ h+='<input class="input" id="ac-q" data-in="acq" type="search" placeholder="Hledat klienta nebo trenéra" value="'+esc(UI.acq||'')+'">';
+ h+='<div class="row" style="gap:6px;overflow-x:auto;padding-bottom:2px">'+[['all','Všichni']].concat(trs.map(t=>[t.id,t.id===S.me?'Moji':t.name.split(' ')[0]])).map(x=>'<button class="chip'+(f===x[0]?' on':'')+'" data-a="acf" data-v="'+x[0]+'">'+esc(x[1])+'</button>').join('')+'</div>';
+ h+=rows.length?'<div class="glass list" id="ac-list">'+rows.map(c=>{const mine=c.trainerId===S.me,d=lastDays(c.id);return '<button class="li" data-a="'+(mine?'open':'opentrainer')+'" data-v="'+(mine?'client:'+c.id:c.trainerId)+'">'+avatar(c,40)+'<div class="grow" style="min-width:0"><div class="ellip" style="font-weight:500">'+esc(c.name)+'</div><div class="tiny muted ellip">'+(mine?'Tvůj klient':ic('person',12)+' '+esc(tn(c)))+'</div><div class="tiny faint">'+(d===null?'Zatím bez tréninku':'Trénoval(a) '+rel(sessOf(c.id)[0].date))+'</div></div>'+ring(adherence(c.id),38)+'</button>';}).join('')+'</div>':'<div class="glass card empty">Nikoho takového jsme nenašli.</div>';
+ h+='<p class="tiny faint" style="text-align:center;margin:4px 20px">Klepnutím na cizího klienta otevřeš jeho trenéra. Poznámky a chat zůstávají soukromé.</p>';
+ h+='</div></div>';return h;
+}
 function scrAttendance(){
  const act=S.clients.filter(c=>c.status==='active');const rows=act.map(c=>({c:c,a:attInfo(c)}));
  const so=UI.attSort;rows.sort((x,y)=>so==='low'?x.a.p-y.a.p:so==='high'?y.a.p-x.a.p:x.c.name.localeCompare(y.c.name,'cs'));
@@ -1314,7 +1327,7 @@ function render(anim){
     h+='<nav class="tabbar glass strong" aria-label="Hlavní navigace">'+[['home','Přehled','home'],['plan','Tréninky','dumbbell'],['progress','Pokrok','trend'],['chat','Zprávy','chat'],['profile','Profil','person']].map(x=>'<button class="tab'+(!top&&UI.tab===x[0]?' on':'')+'" data-a="tab" data-v="'+x[0]+'" aria-label="'+x[1]+'">'+ic(x[2],23,!top&&UI.tab===x[0]?2:1.7)+'<span>'+x[1]+'</span>'+(x[0]==='chat'&&u?'<span class="badge">'+u+'</span>':'')+'</button>').join('')+'</nav>';}
   }else{
   if(top){const [k,id]=top.split(':');
-   h=k==='client'?scrClient(id):k==='session'?scrSession(id):k==='template'?scrTemplate(id):k==='chat'?scrChat(id):k==='editor'?scrEditor():k==='settings'?scrSettings():k==='library'?scrLibrary():k==='exform'?scrExForm():k==='attendance'?scrAttendance():k==='report'?scrReport():k==='reports'&&S.role==='owner'?scrReports():k==='trainer'&&S.role==='owner'?scrTrainer(id):scrMissing();}
+   h=k==='client'?scrClient(id):k==='session'?scrSession(id):k==='template'?scrTemplate(id):k==='chat'?scrChat(id):k==='editor'?scrEditor():k==='settings'?scrSettings():k==='library'?scrLibrary():k==='exform'?scrExForm():k==='attendance'?scrAttendance():k==='allclients'&&S.role==='owner'?scrAllClients():k==='report'?scrReport():k==='reports'&&S.role==='owner'?scrReports():k==='trainer'&&S.role==='owner'?scrTrainer(id):scrMissing();}
   else h=UI.tab==='home'?scrHome():UI.tab==='clients'?scrClients():UI.tab==='templates'?scrTemplates():UI.tab==='chat'?scrChats():UI.tab==='trainers'&&S.role==='owner'?scrTrainers():scrProfile();
   const isChat=top&&top.startsWith('chat:'),isEditor=top==='editor';
   if(!top||!(isChat||isEditor||top.startsWith('session:'))){
@@ -1374,6 +1387,8 @@ const A={
  demo(){S.role='trainer';S.me='tr1';S.authed=true;save();render('push');},
  demoowner(){S.role='owner';S.me='own';S.authed=true;UI.tab='home';save();render('push');toast('Přihlášen jako majitel');},
  opentrainer(v){push('trainer:'+v);},
+ scrollto(v){const el=document.getElementById(v);if(el)el.scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'start'});},
+ acf(v){UI.acf=v;rerender();},
  enter(){S.authed=true;save();render('push');},
  copycode(){copy(S.trainer.code,'Kód zkopírován');},
  copyinvite(){const el=document.getElementById('invite-text');copy(el?el.textContent:'','Zpráva zkopírována');},
@@ -1530,6 +1545,7 @@ app.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.buttons)if(
 app.addEventListener('pointerout',e=>{if(e.pointerType!=='mouse')return;const ch=e.target.closest&&e.target.closest('.chart.bars');if(ch&&!ch.contains(e.relatedTarget)){const t=ch.querySelector('.ctip');if(t)t.hidden=true;ch.querySelectorAll('rect.sel').forEach(r=>r.classList.remove('sel'));}});
 app.addEventListener('input',e=>{
  const k=e.target.getAttribute('data-in');if(!k)return;const v=e.target.value;
+ if(k==='acq'){UI.acq=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('ac-q');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
  if(k==='tq'){UI.tq=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('tq');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
  if(k==='q'){UI.q=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('q');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
  if(k==='noteDraft'||k==='commentDraft'){UI[k]=v;return;}
