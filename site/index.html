@@ -417,6 +417,14 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 .view.ghost.out-l{animation:voutl .18s ease-in both}
 .view.ghost.out-r{animation:voutr .18s ease-in both}
 .view.ghost.out-f{animation:voutf .16s ease both}
+.view.enter-tab.from-r{animation:vtinr .4s cubic-bezier(.32,.72,0,1) both}
+.view.enter-tab.from-l{animation:vtinl .4s cubic-bezier(.32,.72,0,1) both}
+.view.ghost.out-tl{animation:vtoutl .4s cubic-bezier(.32,.72,0,1) both}
+.view.ghost.out-tr{animation:vtoutr .4s cubic-bezier(.32,.72,0,1) both}
+@keyframes vtinr{from{transform:translateX(100%)}to{transform:none}}
+@keyframes vtinl{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes vtoutl{to{transform:translateX(-100%);opacity:.4}}
+@keyframes vtoutr{to{transform:translateX(100%);opacity:.4}}
 @keyframes vin{from{transform:translate3d(36px,0,0);opacity:0}to{transform:none;opacity:1}}
 @keyframes vback{from{transform:translate3d(-28px,0,0);opacity:0}to{transform:none;opacity:1}}
 @keyframes vfade{from{opacity:0}to{opacity:1}}
@@ -1571,12 +1579,12 @@ function render(anim){
  had.forEach(q=>{if(q==='.scrim'&&!(sheetKey&&sheetKey===prevKey))return;app.querySelectorAll(q).forEach(e=>e.classList.add('still'));});
  if(sheetKey&&sheetKey===prevKey){const ns=app.querySelector('.sheet');if(ns){ns.classList.add('still');ns.scrollTop=sheetTop;}}
  if(!sheetKey&&oldSheet&&!REDUCED){[oldScrim,oldSheet].forEach(e=>{if(!e)return;e.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));e.classList.remove('still');e.classList.add('out');app.appendChild(e);setTimeout(()=>e.remove(),260);});}
- if(ghost){ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));ghost.classList.remove('enter','enter-back','enter-tab');ghost.classList.add('ghost',anim==='push'?'out-l':anim==='pop'?'out-r':'out-f');app.appendChild(ghost);ghost.scrollTop=ghostTop;setTimeout(()=>ghost.remove(),300);}
+ if(ghost){ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));ghost.classList.remove('enter','enter-back','enter-tab','from-r','from-l');ghost.classList.add('ghost',anim==='push'?'out-l':anim==='pop'?'out-r':UI.tabDir>0?'out-tl':UI.tabDir<0?'out-tr':'out-f');app.appendChild(ghost);ghost.scrollTop=ghostTop;setTimeout(()=>ghost.remove(),420);}
  glideTabs();
  const v=document.getElementById('view');
  if(v){
   const key=S.authed?(current()||'tab:'+UI.tab):'auth:'+UI.authStep;
-  if(anim==='push')v.classList.add('enter');else if(anim==='pop')v.classList.add('enter-back');else if(anim==='tab')v.classList.add('enter-tab');
+  if(anim==='push')v.classList.add('enter');else if(anim==='pop')v.classList.add('enter-back');else if(anim==='tab'){v.classList.add('enter-tab');if(UI.tabDir)v.classList.add(UI.tabDir>0?'from-r':'from-l');UI.tabDir=0;}
   if(anim==='keep'&&UI.scroll[key]!=null)v.scrollTop=UI.scroll[key];
   else if((anim==='pop'||anim==='tab')&&UI.scroll[key]!=null)v.scrollTop=UI.scroll[key];
   else if(anim==='bottom')v.scrollTop=v.scrollHeight;
@@ -1610,7 +1618,7 @@ function newDraft(t){return t?JSON.parse(JSON.stringify(Object.assign({isNew:fal
 
 const CLIENT_REPLIES=['Díky, rozumím! 👍','Jasně, zkusím to tak.','Super, těším se na další trénink.','Ok, dám vědět, jak to šlo.','Díky za radu!'];
 const A={
- tab(v){if(UI.tab===v&&!UI.stack.length){const vw=document.getElementById('view');if(vw)vw.scrollTo({top:0,behavior:'smooth'});return;}UI.stack=[];UI.tab=v;if(v==='plan'&&UI.cplanSeg!=='history')UI.cplanSeg='plan';UI.sheet=null;render('tab');const vw=document.getElementById('view');if(vw)vw.scrollTop=0;},
+ tab(v){{const ts=[...app.querySelectorAll('.tabbar .tab')].map(x=>x.getAttribute('data-v'));const i0=ts.indexOf(UI.tab),i1=ts.indexOf(v);UI.tabDir=(i0<0||i1<0||UI.stack.length)?0:Math.sign(i1-i0);}if(UI.tab===v&&!UI.stack.length){const vw=document.getElementById('view');if(vw)vw.scrollTo({top:0,behavior:'smooth'});return;}UI.stack=[];UI.tab=v;if(v==='plan'&&UI.cplanSeg!=='history')UI.cplanSeg='plan';UI.sheet=null;render('tab');const vw=document.getElementById('view');if(vw)vw.scrollTop=0;},
  back(){pop();},
  auth(v){UI.authStep=v;render('push');},
  opentrainer(v){push('trainer:'+v);},
