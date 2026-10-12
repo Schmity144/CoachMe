@@ -25,7 +25,7 @@ cut('/* ---------- state ---------- */','function save(){',r'''/* ---------- sta
 const KEY='coachme-local-v1';
 const SB_URL='https://iqrtiypkczsarqimbnqj.supabase.co',SB_KEY='sb_publishable_fsdwgYn2Uvw0jtQw2pqcfg_M1m_1tR0';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor'];
+const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor','guide'];
 function blank(){return {v:7,authed:false,role:'trainer',me:null,cme:null,uid:null,theme:'system',trainers:[],clientsAll:[],templatesAll:[],sessions:[],metrics:[],assign:[],messages:{},notes:{},exCustom:[],reports:[]};}
 let S=blank();
 function loadLocal(){try{const L=JSON.parse(localStorage.getItem(KEY)||'null');if(L)LOCAL_KEYS.forEach(k=>{if(L[k]!==undefined)S[k]=L[k];});}catch(e){}}
@@ -257,3 +257,29 @@ print('pass2 ok')
 s=open('prod.html').read()
 s=s.replace("'+esc(t.spec)+'. Jakmile","'+(t.spec?esc(t.spec)+'. ':'')+'Jakmile",1)
 open('prod.html','w').write(s)
+# ---------- removing clients / trainers through the database ----------
+s=open('prod.html').read()
+def rep2(old,new):
+    global s
+    assert s.count(old)==1, ('anchor',s.count(old),old[:70])
+    s=s.replace(old,new)
+i=s.index("function removeClient(id){");j=s.index("toast('Trenér '+t.name+' byl odebrán');}",i)+len("toast('Trenér '+t.name+' byl odebrán');}")
+s=s[:i]+r"""async function afterRemove(ids,msg){await loadAll();snapshot();leaveScreens(ids);render('pop');toast(msg);}
+function removeClient(id){const c=client(id);if(!c)return;flushNow().then(()=>sb.rpc('remove_client',{p_client:id})).then(({error})=>{if(error)return toast('Svěřence se nepodařilo odebrat, zkus to znovu');afterRemove([id],c.name+' už není tvůj svěřenec');});}
+function removeTrainer(id){const t=S.trainers.find(x=>x.id===id);if(!t)return;const cs=S.clientsAll.filter(c=>c.trainerId===id).map(c=>c.id);flushNow().then(()=>sb.rpc('remove_trainer',{p_trainer:id})).then(({error})=>{if(error)return toast('Trenéra se nepodařilo odebrat, zkus to znovu');afterRemove([id].concat(cs),'Trenér '+t.name+' byl odebrán');});}"""+s[j:]
+# a trainer whose account the owner removed is signed out
+rep2("function applyChange(p){const t=p.table;if(!TB[t])return;",
+     "function applyChange(p){const t=p.table;if(!TB[t])return;\n if(t==='trainers'&&p.eventType==='DELETE'&&p.old&&p.old.id===S.uid&&!isC()){S.authed=false;A.logout();setTimeout(()=>toast('Tvůj trenérský účet byl odebrán.'),400);return;}")
+rep2("if(r.error)return bootFail('Účet se nepodařilo dokončit. '+r.error.message);",
+     "if(r.error)return bootFail(/account removed/.test(r.error.message)?'Tento účet byl odebrán.':'Účet se nepodařilo dokončit. '+r.error.message);")
+rep2("return bootFail(/bad code/.test(r.error.message)?","return bootFail(/account removed/.test(r.error.message)?'Tento účet byl odebrán.':/bad code/.test(r.error.message)?")
+# sync hardening: clients never write templates/exercises; deleted rows leave local state at once; a reload is snapshotted before anything can flush
+rep2(" templates:{cols:['id','trainer_id','data'],get:()=>S.templatesAll.map("," templates:{cols:['id','trainer_id','data'],get:()=>isC()?[]:S.templatesAll.filter(t=>t.tr===S.uid).map(")
+rep2(" exercises:{cols:['id','trainer_id','data'],get:()=>S.exCustom.map("," exercises:{cols:['id','trainer_id','data'],get:()=>isC()?[]:S.exCustom.filter(t=>t.tr===S.uid).map(")
+rep2("if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);}",
+     "if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);TB[t].set([...ROWS[t].values()]);ensureBuckets();}")
+rep2("TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();}","TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();snapshot();}")
+# a late boot for a session that was already signed out (e.g. removed account) does nothing
+rep2(" if(bootUid===session.user.id)return;bootUid=session.user.id;"," if(bootUid===session.user.id)return;bootUid=session.user.id;\n if(!(await sb.auth.getSession()).data.session){bootUid=null;return;}")
+open('prod.html','w').write(s)
+print('remove pass ok')
