@@ -1,0 +1,26 @@
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const W=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:430,height:900},colorScheme:'dark'});const errs=[];
+ const mk=async n=>{const p=await ctx.newPage();p.on('pageerror',e=>errs.push(n+' '+e.message));p.on('console',m=>{if(m.type()==='error')errs.push(n+' console '+m.text());});return p;};
+ const A=await mk('A');const url='file://'+process.cwd()+'/test/index.html';
+ await A.goto(url);await A.evaluate(()=>{localStorage.clear();sessionStorage.clear();});await A.reload();await W(400);
+ await A.click('[data-a=auth][data-v=register]');await A.fill('#r-name','Tomáš Beneš');await A.fill('#r-email','tomas@test.cz');await A.fill('#r-pass','heslo123');await A.click('form[data-form=register] button[type=submit]');await W(700);await A.click('[data-a=enter]');await W(300);
+ const code=await A.evaluate(()=>JSON.parse(localStorage.mockdb).t.trainers[0].code);
+ const reg=async(P,name,em)=>{await P.goto(url);await W(400);await P.click('[data-a=appsw][data-v=client]');await P.click('[data-a=auth][data-v=creg]');await P.fill('#cr-code',code);await P.fill('#cr-name',name);await P.fill('#cr-email',em);await P.fill('#cr-pass','heslo123');await P.click('form[data-form=creg] button[type=submit]');await W(800);await P.click('[data-a=enter]');await W(400);};
+ const B=await mk('B');await reg(B,'Jana Malá','jana@test.cz');
+ const C=await mk('C');await reg(C,'Petr Velký','petr@test.cz');
+ // B: own exercise + own template
+ await B.click('.tabbar [data-v=plan]');await W(300);await B.click('[data-a=cpseg][data-v=lib]');await W(300);await B.click('#view [data-a=exnew]');await W(300);
+ await B.fill('#exf-name','Moje kliky');await B.selectOption('#exf-mu','Hrudník');await B.click('[data-a=exfeq][data-v="Vlastní váha"]');await B.click('[data-a=exsave]');await W(500);
+ await B.click('[data-a=cpseg][data-v=plan]');await W(300);await B.click('#view [data-a=newtpl]');await W(300);await B.fill('#d-name','Janin trénink');await B.click('[data-a=expickopen]');await W(300);
+ await B.fill('#exq','moje');await B.dispatchEvent('#exq','input');await W(300);await B.click('.sheet [data-a=extoggle] >> nth=0');await B.click('[data-a=expickdone]');await W(300);await B.click('.scrim',{position:{x:10,y:10}}).catch(()=>{});await W(300);
+ await B.click('[data-a=savetpl]');await W(900);await B.click('[data-a=back]');await W(300);await B.click('.tabbar [data-v=home]');await W(300);
+ const db=await A.evaluate(()=>JSON.parse(localStorage.mockdb).t);
+ console.log('db tpl',JSON.stringify(db.templates.map(r=>[r.trainer_id&&'tr',r.client_id&&'cl',r.data.name])),'db ex',JSON.stringify(db.exercises.map(r=>[r.client_id&&'cl',r.data.name])));
+ await A.reload();await W(900);console.log('A home section',await A.locator('text=Vlastní tréninky klientů').count(),'item',await A.locator('#view >> text=Janin trénink').count());
+ const tid=db.templates[0].id;await A.click('[data-a=open][data-v="template:'+tid+'"]');await W(400);await A.fill('#tc-new','Pěkné!');await A.dispatchEvent('#tc-new','input');await A.click('[data-a=tplcomment]');await W(900);
+ const db2=await A.evaluate(()=>JSON.parse(localStorage.mockdb).t);console.log('db comments',JSON.stringify(db2.templates[0].data.comments.map(c=>c.by+':'+c.text)),'trSeen',db2.templates[0].data.trSeen);
+ await B.reload();await W(900);await B.click('.tabbar [data-v=home]').catch(()=>{});await W(300);await B.screenshot({path:'y27b.png'});console.log('after B',JSON.stringify((await B.evaluate(()=>JSON.parse(localStorage.mockdb).t)).templates[0].data.comments));await B.evaluate(()=>{const v=document.getElementById('view');v.scrollTop=v.scrollHeight;});await W(200);await B.screenshot({path:'y27c.png'});console.log(await B.evaluate(()=>document.getElementById('view').innerText.slice(-600)));console.log('B home comment card',await B.locator('text=Komentář k tvému tréninku').count());
+ await C.reload();await W(900);await C.click('.tabbar [data-v=plan]');await W(300);console.log('C sees B tpl',await C.locator('text=Janin trénink').count());await C.click('[data-a=cpseg][data-v=lib]');await W(300);console.log('C sees B ex',await C.locator('text=Moje kliky').count());
+ await A.click('[data-a=back]');await W(200);await A.click('[data-a=tab][data-v=templates]');await W(300);console.log('A tpl list has client tpl',await A.locator('#view >> text=Janin trénink').count());
+ console.log(errs);await b.close();})();
