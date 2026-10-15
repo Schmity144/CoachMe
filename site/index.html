@@ -369,6 +369,10 @@ textarea.input{height:auto;min-height:84px;padding:13px 16px;resize:none;line-he
 .notif .appic{width:38px;height:38px;border-radius:10px;background:#000;display:grid;place-items:center;flex:none}
 .empty{padding:28px 10px;text-align:center;color:var(--ink3);font-size:14px}
 
+#hres mark{background:color-mix(in srgb,var(--accent) 30%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.hqx{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;color:var(--muted,inherit);flex:none}
+.hqx[hidden],#hres[hidden],#hmain[hidden]{display:none}
+#hq::-webkit-search-cancel-button{display:none}
 /* Volt theme: black and white base with one electric lime accent, heavy uppercase titles, frosted glass bars */
 :root{--bg:#EDEDE8;--bg2:#F7F7F4;--ink:#0A0A0B;--ink2:#55555A;--ink3:#8A8A8F;--line:rgba(0,0,0,.08);--chip:rgba(0,0,0,.055);--on-ink:#fff;--glass:rgba(255,255,255,.80);--glass-strong:rgba(255,255,255,.93);--glass-edge:rgba(255,255,255,.95);--glass-shade:rgba(0,0,0,.05);--shadow:0 8px 24px rgba(0,0,0,.07),0 0 0 .5px rgba(0,0,0,.06);--accent:#5E8C00;--grad:#D4FF3A;--grad-ink:#0A0A0B;--acc-text:#0A0A0B;--acc-soft:rgba(10,10,11,.10);--tabon:#0A0A0B;--page:#DCDCD6;color-scheme:light}
 .screen{background:var(--bg)!important}
@@ -806,6 +810,8 @@ function scrHome(){
  const delta=wk-pwk;
  let h='<div class="view" id="view"><div class="stack">';
  h+='<div class="row between" style="margin-bottom:4px"><div class="stack" style="gap:4px"><span class="eyebrow">'+esc(fmtDL(now.toISOString()))+'</span><h1 class="title-xl">'+hi+',<br>'+esc(t.name.split(' ')[0])+'</h1></div><button data-a="tab" data-v="profile" aria-label="Profil">'+avatar(t,48)+'</button></div>';
+ h+='<label class="glass row" style="border-radius:999px;padding:0 16px;height:46px" for="hq">'+ic('search',18)+'<input id="hq" data-in="hq" type="search" autocomplete="off" value="'+esc(UI.hq||'')+'" placeholder="Hledat klienta, šablonu, zprávu…" style="border:0;background:transparent;outline:none;flex:1;height:100%;font-size:16px;min-width:0">'+'<button class="hqx" data-a="hqclear" aria-label="Vymazat hledání"'+(UI.hq?'':' hidden')+'>'+ic('x',16)+'</button></label>';
+ h+='<div id="hres" class="stack"'+(UI.hq?'':' hidden')+'>'+homeSearch(UI.hq||'')+'</div><div id="hmain" class="stack"'+(UI.hq?' hidden':'')+'>';
  if(S.role==='owner'){const tot=S.clientsAll.filter(c=>c.status==='active').length;h+='<button class="glass card row" data-a="tab" data-v="trainers" style="text-align:left;border-radius:26px"><span class="iconbtn" style="background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)">'+ic('crown',22)+'</span><div class="grow"><div class="eyebrow">Aplikace CoachMe</div><div class="title-m" style="margin-top:2px">'+S.trainers.length+' trenérů · '+tot+' klientů</div><div class="tiny muted">Přehled všech trenérů</div></div>'+ic('chev',18)+'</button>';}
  h+='<div class="grid3">'
   +'<button class="glass kpi" data-a="review" style="text-align:left"><span class="l">Ke kontrole</span><span class="v num" style="font-size:24px">'+pend.length+'</span></button>'
@@ -824,8 +830,19 @@ function scrHome(){
   +'<button class="glass kpi" data-a="tab" data-v="chat" style="text-align:left"><span class="l">Nepřečtené zprávy</span><span class="v num">'+unreadAll()+'</span><span class="tiny faint">od '+S.clients.filter(c=>unread(c.id)).length+' klientů</span></button>'
   +'</div>';
  h+='<div class="glass card stack" style="gap:6px"><div class="row between"><span class="title-m">Odcvičené tréninky</span><span class="tiny faint">po týdnech</span></div>'+barChart(w,{label:'Počet tréninků za týden'})+'</div>';
- h+='</div></div>';return h;
+ h+='</div></div></div>';return h;
 }
+function nrm(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function hlite(text,q){const i=nrm(text).indexOf(q);if(i<0)return esc(text);return esc(text.slice(0,i))+'<mark>'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length));}
+function homeSearch(raw){const q=nrm(raw.trim());if(!q)return '';let h='';
+ const cl=S.clients.filter(c=>nrm(c.name).includes(q)||nrm(c.goal).includes(q)).slice(0,6);
+ if(cl.length)h+='<div class="sec"><h3>Klienti</h3></div><div class="glass list">'+cl.map(c=>'<div class="li"><button class="row grow" style="gap:12px;text-align:left;min-width:0" data-a="open" data-v="client:'+c.id+'">'+avatar(c,40)+'<div class="grow" style="min-width:0"><div class="ellip" style="font-weight:500">'+hlite(c.name,q)+'</div><div class="tiny muted ellip">'+esc(c.goal||'')+'</div></div></button><button class="iconbtn" style="flex:none" data-a="open" data-v="chat:'+c.id+'" aria-label="Napsat zprávu">'+ic('chat',18)+'</button></div>').join('')+'</div>';
+ const tl=S.templates.map(t=>{if(nrm(t.name).includes(q))return {t:t};const e=t.ex.find(e=>nrm(e.name).includes(q));return e?{t:t,e:e}:null;}).filter(Boolean).slice(0,6);
+ if(tl.length)h+='<div class="sec"><h3>Šablony</h3></div><div class="glass list">'+tl.map(x=>'<button class="li plain" data-a="open" data-v="template:'+x.t.id+'"><div class="grow" style="min-width:0"><div class="ellip" style="font-weight:500">'+hlite(x.t.name,q)+'</div><div class="tiny muted ellip">'+(x.e?'Obsahuje: '+hlite(x.e.name,q):esc(x.t.cat)+' · '+x.t.ex.length+' cviků')+'</div></div>'+ic('chev',18)+'</button>').join('')+'</div>';
+ const ml=[];S.clients.forEach(c=>(S.messages[c.id]||[]).forEach(m=>{if(m.text&&nrm(m.text).includes(q))ml.push({c:c,m:m});}));ml.sort((a,b)=>b.m.at.localeCompare(a.m.at));
+ if(ml.length)h+='<div class="sec"><h3>Zprávy</h3></div><div class="glass list">'+ml.slice(0,8).map(x=>'<button class="li plain" data-a="open" data-v="chat:'+x.c.id+'">'+avatar(x.c,36)+'<div class="grow" style="min-width:0"><div class="row between" style="gap:8px"><span class="ellip" style="font-weight:500">'+esc(x.c.name)+'</span><span class="tiny faint" style="flex:none">'+esc(fmtD(x.m.at))+'</span></div><div class="tiny muted ellip">'+(x.m.by==='trainer'?'Ty: ':'')+hlite(x.m.text,q)+'</div></div></button>').join('')+'</div>';
+ if(!h)h='<div class="glass card" style="text-align:center"><div class="muted small">Nic nenalezeno pro „'+esc(raw.trim())+'“</div></div>';
+ return h;}
 function scrClients(){
  const f=UI.clientFilter,q=UI.q.trim().toLowerCase();
  const list=S.clients.filter(c=>c.status==='active').map(c=>({c:c,s:status(c.id),a:adherence(c.id),d:lastDays(c.id)}))
@@ -1440,11 +1457,11 @@ function sheetHTML(){
  if(sh.type==='share'||sh.type==='assign'){
   const sel=sh.sel;
   if(sh.type==='share'){const t=tpl(sh.id);
-   b='<div class="stack"><div><span class="eyebrow">Sdílet šablonu</span><div class="title-l" style="margin-top:4px">'+esc(t.name)+'</div></div><div class="glass list">'+S.clients.map(c=>'<button class="li" data-a="toggle" data-v="'+c.id+'">'+avatar(c,36)+'<span class="grow ellip">'+esc(c.name)+'</span><span class="check'+(sel.includes(c.id)?' on':'')+'">'+(sel.includes(c.id)?ic('check',14,2.6):'')+'</span></button>').join('')+'</div>';
+   b='<div class="stack"><div>'+(sh.saved?'<span class="eyebrow" style="color:var(--acc-text)">'+ic('check',13,2.6)+' Šablona uložena</span><div class="title-l" style="margin-top:4px">Komu ji rovnou poslat?</div><div class="tiny muted" style="margin-top:2px">'+esc(t.name)+'</div>':'<span class="eyebrow">Sdílet šablonu</span><div class="title-l" style="margin-top:4px">'+esc(t.name)+'</div>')+'</div><div class="glass list">'+S.clients.map(c=>'<button class="li" data-a="toggle" data-v="'+c.id+'">'+avatar(c,36)+'<span class="grow ellip">'+esc(c.name)+'</span><span class="check'+(sel.includes(c.id)?' on':'')+'">'+(sel.includes(c.id)?ic('check',14,2.6):'')+'</span></button>').join('')+'</div>';
   }else{const c=client(sh.id);
    b='<div class="stack"><div><span class="eyebrow">Přiřadit klientovi</span><div class="title-l" style="margin-top:4px">'+esc(c.name)+'</div></div><div class="glass list">'+S.templates.filter(t=>!t.forClient||t.forClient===sh.id).map(t=>'<button class="li plain" data-a="toggle" data-v="'+t.id+'"><div class="grow"><div class="ellip" style="font-weight:500">'+esc(t.name)+'</div><div class="tiny muted">'+esc(t.cat)+' · '+t.ex.length+' cviků</div></div><span class="check'+(sel.includes(t.id)?' on':'')+'">'+(sel.includes(t.id)?ic('check',14,2.6):'')+'</span></button>').join('')+'</div>';
   }
-  b+='<div class="field"><label for="sh-note">Vzkaz (nepovinné)</label><input class="input" id="sh-note" data-in="sheetNote" value="'+esc(sh.note||'')+'" placeholder="Např. Začni v pondělí, váhy dle pocitu"></div><button class="btn ink block" data-a="doshare"'+(sel.length?'':' disabled style="opacity:.4"')+'>'+(sel.length?'Sdílet ('+sel.length+')':'Vyber '+(sh.type==='share'?'klienty':'šablonu'))+'</button></div>';
+  b+='<div class="field"><label for="sh-note">Vzkaz (nepovinné)</label><input class="input" id="sh-note" data-in="sheetNote" value="'+esc(sh.note||'')+'" placeholder="Např. Začni v pondělí, váhy dle pocitu"></div><button class="btn ink block" data-a="doshare"'+(sel.length?'':' disabled style="opacity:.4"')+'>'+(sel.length?(sh.saved?'Poslat ('+sel.length+')':'Sdílet ('+sel.length+')'):'Vyber '+(sh.type==='share'?'klienty':'šablonu'))+'</button>'+(sh.saved?'<button class="btn ghost block" data-a="close">Později</button>':'')+'</div>';
  }
  if(sh.type==='attach'){b='<div class="stack"><span class="eyebrow">'+(isC()?'Poslat trenérovi':'Poslat klientovi')+'</span><div class="glass list" style="padding:0"><label class="attach-opt" for="chat-file"><span class="ico" style="background:var(--accent)">'+ic('image',20)+'</span><span class="grow">Fotka nebo video<div class="tiny muted" style="font-weight:400">Z galerie telefonu</div></span>'+ic('chev',18)+'</label><input type="file" id="chat-file" accept="image/*,video/*" hidden data-file="chat:'+sh.id+'">'+(isC()?'':'<button class="attach-opt" data-a="sheet" data-v="chattpl:'+sh.id+'"><span class="ico" style="background:var(--i-3)">'+ic('dumbbell',20)+'</span><span class="grow">Tréninková šablona<div class="tiny muted" style="font-weight:400">Klient ji uvidí ve svém plánu</div></span>'+ic('chev',18)+'</button>')+'</div><button class="btn ghost block" data-a="close">Zrušit</button></div>';}
  if(sh.type==='chattpl'){b='<div class="stack"><span class="eyebrow">Sdílet šablonu v chatu</span><div class="glass list">'+S.templates.map(t=>'<button class="li plain" data-a="chatsendtpl" data-v="'+sh.id+':'+t.id+'"><div class="grow"><div class="ellip" style="font-weight:500">'+esc(t.name)+'</div><div class="tiny muted">'+t.ex.length+' cviků · '+setCount(t)+' sérií</div></div>'+catpill(t.cat)+'</button>').join('')+'</div><button class="btn ghost block" data-a="close">Zrušit</button></div>';}
@@ -1631,6 +1648,7 @@ const A={
  open(v){if(v.startsWith('client:')&&isC())return;if(v.startsWith('client:')){UI.clientSeg='overview';UI.liftSel=null;}UI.sheet=null;push(v);},
  sheet(v){const [t,id]=v.split(':');UI.sheet={type:t,id:id,sel:t==='share'?[]:[],note:''};rerender();},
  close(){UI.sheet=null;rerender();},
+ hqclear(){UI.hq='';rerender();const q=document.getElementById('hq');if(q)q.focus();},
  cfilter(v){UI.clientFilter=v;rerender();},
  cseg(v){UI.clientSeg=v;rerender();},
  lift(v){UI.liftSel=v;rerender();},
@@ -1700,7 +1718,7 @@ const A={
   d.ex.forEach(e=>{if(e.restTxt!=null){e.rest=parseRest(e.restTxt);delete e.restTxt;}e.sets.forEach(x=>{x.reps=String(x.reps==null?'':x.reps).trim();});if(!e.name.trim())e.name='Cvik';});
   const t={id:d.id||'t'+uid(),name:d.name.trim(),cat:d.cat,dur:d.dur||50,desc:d.desc,ex:d.ex};if((d.folder||'').trim())t.folder=d.folder.trim();if(d.forClient){t.forClient=d.forClient;t.baseId=d.baseId;}
   t.tr=S.me;const i=S.templatesAll.findIndex(x=>x.id===t.id);if(i>=0)S.templatesAll[i]=t;else S.templatesAll.unshift(t);save();
-  UI.stack.pop();if(d.isNew)UI.stack.push('template:'+t.id);render('pop');toast('Šablona uložena');},
+  UI.stack.pop();if(d.isNew)UI.stack.push('template:'+t.id);render('pop');if(d.isNew&&!d.forClient&&S.clients.length){UI.sheet={type:'share',id:t.id,sel:[],note:'',saved:true};rerender();}else toast('Šablona uložena');},
  deltpl(id){UI.sheet={type:'confirm',title:'Smazat šablonu?',text:'Klientům, se kterými jsi ji sdílel, zmizí z plánu.',ok:'Smazat šablonu',run:()=>{S.templates=S.templates.filter(t=>t.id!==id);S.assign=S.assign.filter(a=>a.templateId!==id);save();UI.stack=UI.stack.filter(r=>r!=='template:'+id&&r!=='editor');render('pop');toast('Šablona smazána');}};rerender();},
  regen(){UI.sheet={type:'confirm',title:'Vygenerovat nový kód?',text:'Starý kód přestane fungovat pro nové registrace. Stávající klienti zůstanou připojení.',ok:'Vygenerovat',run:()=>{sb.rpc('regen_code').then(({data,error})=>{if(error)return toast('Kód se nepodařilo změnit');S.trainer.code=data;const r=ROWS.trainers.get(S.uid);if(r)r.code=data;rerender();toast('Nový kód: '+fmtCode(data));});}};rerender();},
  saveprofile(){save();toast('Profil uložen');},
@@ -1860,6 +1878,7 @@ app.addEventListener('input',e=>{
  const k=e.target.getAttribute('data-in');if(!k)return;const v=e.target.value;
  if(k==='acq'){UI.acq=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('ac-q');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
  if(k==='tq'){UI.tq=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('tq');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
+ if(k==='hq'){UI.hq=v;const on=!!v.trim(),r=document.getElementById('hres'),m=document.getElementById('hmain'),x=document.querySelector('.hqx');if(r){r.innerHTML=homeSearch(v);r.hidden=!on;}if(m)m.hidden=on;if(x)x.hidden=!v;return;}
  if(k==='q'){UI.q=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('q');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
  if(k==='noteDraft'||k==='commentDraft'){UI[k]=v;return;}
  if(k==='liftSel'){UI.liftSel=v;rerender();return;}
