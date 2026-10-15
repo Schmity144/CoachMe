@@ -481,6 +481,9 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 .edin{width:100%;border:0;background:transparent;outline:none;text-align:center;font:inherit;font-size:18px;font-weight:800;color:var(--ink);padding:0}.edin::placeholder{color:var(--ink3);font-weight:600}
 .pkbox{width:26px;height:26px;border-radius:8px;border:2px solid var(--ink3);display:grid;place-items:center;flex:none;color:#fff}
 .pkbox.on{border:0;background:var(--grad);color:var(--grad-ink)}
+.stprev{border-radius:20px;min-height:96px;display:flex;align-items:center;justify-content:center;padding:14px;background:radial-gradient(60% 80% at 25% 30%,#b08a64 0%,transparent 70%),radial-gradient(70% 80% at 85% 70%,#3b4a5c 0%,transparent 70%),linear-gradient(160deg,#7d736a,#2b2e33)}
+.stprev img{max-width:100%;height:auto;width:min(100%,var(--w,340px))}
+.stopt .strd{width:20px;height:20px;border-radius:50%;border:2px solid var(--ink3);flex:none}.stopt.on .strd{border:6px solid var(--grad,var(--accent))}.stopt.on{box-shadow:inset 0 0 0 1.5px var(--grad,var(--accent))}
 </style>
 
 <div class="stage">
@@ -931,7 +934,7 @@ function scrSession(id){
  if(cm){let ch=0;s.comments.forEach(m=>{if(m.by==='trainer'&&m.cread===false){m.cread=true;ch=1;}});if(ch)save();}else if(!s.seen){s.seen=true;save();}
  const c=client(s.clientId),t=tpl(s.templateId),tn=S.trainer.name.split(' ')[0];
  let h='<div class="view detail" id="view">'+nav(s.title)+'<div class="stack">';
- if(cm)h+='<span class="eyebrow">'+esc(fmtDL(s.date))+' · '+fmtT(s.date)+'</span>';else h+='<button class="row" data-a="open" data-v="client:'+c.id+'" style="text-align:left">'+avatar(c,36)+'<span class="small muted">'+esc(c.name)+'</span></button>';
+ if(cm)h+='<div class="row between"><span class="eyebrow">'+esc(fmtDL(s.date))+' · '+fmtT(s.date)+'</span><button class="btn ghost sm" data-a="sharesum" data-v="'+s.id+'">'+ic('share',16)+' Do story</button></div>';else h+='<button class="row" data-a="open" data-v="client:'+c.id+'" style="text-align:left">'+avatar(c,36)+'<span class="small muted">'+esc(c.name)+'</span></button>';
  h+='<h1 class="title-xl" style="font-size:30px">'+esc(s.title)+'</h1>';
  h+='<div class="grid3"><div class="glass kpi"><span class="l">Datum</span><span class="v num" style="font-size:17px">'+fmtD(s.date)+'</span></div><div class="glass kpi"><span class="l">Trvalo</span><span class="v num" style="font-size:17px">'+s.dur+' min</span></div><div class="glass kpi"><span class="l">Pocit</span><span class="v feelpill" style="font-size:17px">'+feelTxt(s)+'</span></div></div>';
  h+='<div class="tiny faint row" style="gap:6px;margin:-4px 4px 0">'+ic('clock',14)+(cm?'Čas změřila tvoje aplikace od začátku do konce tréninku.':'Čas změřila aplikace klienta od začátku do konce tréninku.')+'</div>';
@@ -1296,6 +1299,31 @@ function progSug(e,le,timed){if(!e.prog||!le||timed)return null;let top=0,ok=tru
 function prevSets(cid,name,before){const s=sessOf(cid).filter(q=>q.date<before).find(q=>q.ex.some(e=>exK(e)===name));if(!s)return '';const e=s.ex.find(x=>exK(x)===name);return e.sets.map(x=>e.timed?(x.reps+' s'):((x.kg?wnum(x.kg)+'×':'')+x.reps)).join(' · ');}
 const GUIDE={trainer:[['👋','Vítej v CoachMe','Tady vedeš své klienty. Ukážeme ti to ve čtyřech krocích.'],['🔑','Pozvi klienty','Pošli klientům svůj trenérský kód. Zadají ho při registraci a hned se ti objeví v Klientech.'],['📋','Šablony a plán na týden','Poskládej trénink z knihovny cviků. V detailu klienta ho pak naplánuješ na konkrétní dny.'],['✅','Přehled Dnes','Na přehledu vidíš, co máš zkontrolovat a komu poslat připomínku. Kontrola tréninků jde rychle za sebou.']],
  client:[['👋','Vítej v CoachMe','Tvůj trenér ti sem posílá tréninky. Krátce ti ukážeme, jak to funguje.'],['📅','Plán na týden','Na přehledu vidíš, co tě čeká dnes. Klepni na Začít trénink a vyber si.'],['🏋️','Zapisování','Váhy se předvyplní z minula. Aplikace navrhne, kdy přidat, a spočítá kotouče na osu.'],['📈','Pokrok a check-in','Sleduj rekordy a odznaky. Jednou týdně pošli trenérovi krátký check-in.']]};
+/* story sticker: a slim strip with time, one set the client picks and the coach, saved as PNG (transparent or on a dark pill) */
+const MARKIMG=new Image();MARKIMG.src=MARK;
+function stT(x){return S.lang==='en'&&typeof trText==='function'?trText(x):x;}
+function storySets(s){const out=[];s.ex.forEach(e=>{const seen={};e.sets.forEach(x=>{if(!(x.kg>0||x.reps>0))return;const key=x.kg+'|'+x.reps;if(seen[key])return;seen[key]=1;
+ const v=inU(e.unit,()=>e.timed?x.reps+' s':x.kg>0?W(x.kg)+' × '+x.reps:x.reps+' '+stT('opak.'));out.push({name:e.name,v:v,up:!!x.up,e1:e.timed?0:(x.kg||0)*(1+(x.reps||0)/30)+(x.kg?0:(x.reps||0)/100)});});});return out;}
+function storyBest(list){let b=-1;list.forEach((x,i)=>{if(b<0||(x.up&&!list[b].up)||(x.up===list[b].up&&x.e1>list[b].e1))b=i;});return Math.max(0,b);}
+function storyTime(s){return s.secs?fmtClock(s.secs):s.dur+' min';}
+function storyCanvas(s,pick,bg){const k=3,F='Inter,-apple-system,system-ui,"Segoe UI",sans-serif',list=storySets(s),it=list[pick]||list[0]||{name:s.title,v:s.dur+' min',up:false};
+ const nm=stT(it.name),lab=(nm.length>24?nm.slice(0,23)+'…':nm).toUpperCase()+(it.up?' 🔥':''),blocks=[[stT('Čas').toUpperCase(),storyTime(s),19,'#fff'],[lab,it.v,19,it.up?'#D4FF3A':'#fff'],[stT('Trenér').toUpperCase(),(S.trainer&&S.trainer.name)||'',14,'#fff']];
+ const m=document.createElement('canvas').getContext('2d');const sp=(c,t,ls)=>{let w=0;for(const ch of t)w+=c.measureText(ch).width+ls;return w-ls;};
+ const bw=blocks.map(b=>{m.font='600 9.5px '+F;const a=sp(m,b[0],.76);m.font='800 '+b[2]+'px '+F;return Math.max(a,m.measureText(b[1]).width);});
+ const logoW=30,logoH=30*320/573,gap=14,padX=bg?20:6,padY=bg?10:6,innerH=36,outer=bg?14:10;
+ const innerW=logoW+gap+1+gap+bw[0]+gap+bw[1]+gap+1+gap+bw[2],W_=Math.ceil(innerW+2*padX+2*outer),H_=Math.ceil(innerH+2*padY+2*outer);
+ const cv_=document.createElement('canvas');cv_.width=W_*k;cv_.height=H_*k;const g=cv_.getContext('2d');g.scale(k,k);
+ if(bg){const x=outer,y=outer,w=W_-2*outer,h=H_-2*outer,r=h/2;g.fillStyle='rgba(10,10,11,.92)';g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();g.fill();}
+ const shade=()=>{if(!bg){g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=5;g.shadowOffsetY=1;}};const noshade=()=>{g.shadowColor='transparent';g.shadowBlur=0;g.shadowOffsetY=0;};
+ let x=outer+padX;const cy=H_/2;
+ if(MARKIMG.complete&&MARKIMG.naturalWidth){const lc=document.createElement('canvas');lc.width=logoW*k;lc.height=Math.round(logoH*k);const lg=lc.getContext('2d');lg.drawImage(MARKIMG,0,0,lc.width,lc.height);lg.globalCompositeOperation='source-in';lg.fillStyle='#fff';lg.fillRect(0,0,lc.width,lc.height);shade();g.drawImage(lc,x,cy-logoH/2,logoW,logoH);noshade();}
+ x+=logoW+gap;const sep=()=>{shade();g.fillStyle='rgba(255,255,255,.4)';g.fillRect(x,cy-15,1,30);noshade();x+=1+gap;};sep();
+ blocks.forEach((b,i)=>{shade();g.textBaseline='alphabetic';g.fillStyle='rgba(255,255,255,.85)';g.font='600 9.5px '+F;let lx=x;for(const ch of b[0]){g.fillText(ch,lx,cy-6);lx+=g.measureText(ch).width+.76;}
+  g.fillStyle=b[3];g.font='800 '+b[2]+'px '+F;g.fillText(b[1],x,cy+(b[2]>15?13:11));noshade();x+=bw[i]+gap;if(i===1)sep();});
+ return cv_;}
+function storySave(s,pick,bg){storyCanvas(s,pick,bg).toBlob(bl=>{if(!bl)return toast('Obrázek se nepodařilo vytvořit');const file=new File([bl],'coachme-story.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file]}).catch(()=>{});return;}
+  const u=URL.createObjectURL(bl);const a=document.createElement('a');a.href=u;a.download='coachme-story.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Obrázek uložen');},'image/png');}
 function shareSummary(s){const c=client(s.clientId),cv_=document.createElement('canvas');cv_.width=1080;cv_.height=1350;const g=cv_.getContext('2d');const gr=g.createLinearGradient(0,0,1080,1350);gr.addColorStop(0,'#0B1A3E');gr.addColorStop(1,'#0A5C7A');g.fillStyle=gr;g.fillRect(0,0,1080,1350);
  const F='-apple-system,system-ui,Segoe UI,sans-serif';g.fillStyle='#fff';g.font='700 46px '+F;g.fillText('CoachMe',80,120);g.font='600 40px '+F;g.fillStyle='rgba(255,255,255,.75)';g.fillText(fmtDL(s.date),80,190);
  g.fillStyle='#fff';g.font='800 84px '+F;g.fillText(s.title.slice(0,22),80,330);g.font='500 44px '+F;g.fillStyle='rgba(255,255,255,.8)';g.fillText(s.dur+' min · '+s.ex.length+' cviků',80,410);
@@ -1578,13 +1606,19 @@ function sheetHTML0(){
    +ciQ('Jak jsi tento týden spal(a)?','sleep',CI_SLEEP)+ciQ('Úroveň stresu','stress',CI_STRESS)+ciQ('Jak ses držel(a) jídelníčku?','diet',CI_DIET)
    +'<div class="glass card stack" style="gap:10px"><div class="row between"><b class="small">Váha (nepovinné)</b><span class="row" style="gap:6px"><input class="input num" id="ci-kg" data-in="ci.kg" inputmode="decimal" value="'+esc(ci.kg||'')+'" style="width:92px;height:40px;text-align:right"><span class="small">'+U()+'</span></span></div><div class="row" style="gap:8px">'+['Zepředu','Z boku','Zezadu'].map((l,k)=>'<label class="ciph" for="ci-f'+k+'">'+(ci.photos[k]?'<img src="'+ci.photos[k]+'" alt="">':'📷<br>'+l)+'</label><input type="file" id="ci-f'+k+'" accept="image/*" hidden data-file="ci:'+k+'">').join('')+'</div><div class="tiny faint">Fotky postavy vidí jen trenér. Nepovinné.</div></div>'
    +'<textarea class="input" id="ci-note" data-in="ci.note" placeholder="Něco dalšího pro trenéra? (nepovinné)">'+esc(ci.note||'')+'</textarea><button class="btn ink block" data-a="cisave">Odeslat trenérovi</button></div>';}
+ if(sh.type==='story'){const s=S.sessions.find(x=>x.id===sh.sid);if(s){const list=storySets(s);let src='';try{src=storyCanvas(s,sh.pick,sh.bg).toDataURL('image/png');}catch(_){}
+  b='<div class="stack"><div><span class="eyebrow">Sdílet do story</span><div class="title-l" style="margin-top:4px">Nálepka na fotku</div><div class="tiny muted" style="margin-top:2px">Ulož obrázek a v Instagramu ho vlož do story přes nálepku Fotka.</div></div>'
+   +'<div class="stprev"><img alt="Náhled nálepky" src="'+src+'"></div>'
+   +'<div class="seg glass">'+[['0','Průhledné'],['1','S podkladem']].map(x=>'<button class="'+((sh.bg?'1':'0')===x[0]?'on':'')+'" data-a="stbg" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'
+   +'<div class="tiny muted" style="margin:2px 4px -4px">Vyber sérii, kterou se pochlubíš</div><div class="glass list">'+list.map((x,i)=>'<button class="li plain stopt'+(i===sh.pick?' on':'')+'" data-a="stpick" data-v="'+i+'"><span class="strd"></span><span class="grow" style="min-width:0"><span class="ellip" style="display:block;font-weight:600">'+esc(x.name)+'</span><span class="tiny muted num">'+esc(x.v)+'</span></span>'+(x.up?'<span class="tiny" style="color:var(--acc-text,var(--accent));font-weight:700;flex:none">🔥 rekord</span>':'')+'</button>').join('')+'</div>'
+   +'<button class="btn ink block" data-a="stsave">'+ic('share',18)+' Uložit obrázek</button><button class="btn ghost block" data-a="close">Zavřít</button></div>';}}
  if(sh.type==='summary'){const s=S.sessions.find(x=>x.id===sh.sid);if(s){const st=streakWeeks(s.clientId),ups=s.ex.filter(e=>e.sets.some(x=>x.up)),first=(client(s.clientId)||{name:''}).name.split(' ')[0];
   b='<div class="stack" style="gap:14px"><div style="text-align:center"><div style="font-size:46px;line-height:1">🎉</div><div class="title-l" style="margin-top:8px">Skvělá práce!</div><div class="tiny muted" style="margin-top:2px">'+esc(s.title)+' · '+s.dur+' min · '+feelTxt(s)+'</div></div>'
    +'<div class="sumcard stack" style="gap:12px"><div class="row between" style="align-items:flex-end"><div><div class="tiny" style="opacity:.7">Objem</div><div class="num" style="font-size:30px;font-weight:800">'+fmtKg(cv(volume(s)))+' '+U()+'</div></div><div style="text-align:right"><div class="tiny" style="opacity:.7">Týdny v řadě</div><div style="font-size:30px;font-weight:800">🔥 '+st+'</div></div></div>'
    +(ups.length?'<div class="stack" style="gap:6px"><b>Nové rekordy</b>'+ups.map(e=>{const bb=e.sets.filter(x=>x.up).sort((a,b)=>b.kg-a.kg||b.reps-a.reps)[0];return '<div class="row between small"><span class="ellip">'+esc(e.name)+'</span><b class="num" style="flex:none">'+(bb.kg?wnum(bb.kg)+' '+U()+' × ':'')+bb.reps+'</b></div>';}).join('')+'</div>':'<div class="small" style="opacity:.8">Každý odcvičený trénink se počítá. Jen tak dál!</div>')
    +'<div class="tiny" style="opacity:.6">CoachMe · trenér '+esc(S.trainer.name||'')+'</div></div>'
    +((sh.b||[]).length?(sh.b.map(x=>'<div class="glass card row" style="gap:12px"><span style="font-size:28px">'+x[1]+'</span><div><b>Nový odznak: '+esc(x[2])+'</b><div class="tiny muted">Najdeš ho v záložce Pokrok.</div></div></div>').join('')):'')
-   +'<button class="btn ink block" data-a="sharesum" data-v="'+s.id+'">'+ic('share',18)+' Sdílet obrázek</button><button class="btn ghost block" data-a="close">Zavřít</button></div>';}}
+   +'<button class="btn ink block" data-a="sharesum" data-v="'+s.id+'">'+ic('share',18)+' Sdílet do story</button><button class="btn ghost block" data-a="close">Zavřít</button></div>';}}
  if(sh.type==='guide'){const G=GUIDE[isC()?'client':'trainer'],g=G[sh.i]||G[0],last=sh.i>=G.length-1;
   b='<div class="stack guide" style="gap:14px"><div class="e">'+g[0]+'</div><div class="title-l">'+esc(g[1])+'</div><p class="muted" style="margin:0;line-height:1.5">'+esc(g[2])+'</p><div class="gdots">'+G.map((x,k)=>'<i'+(k===sh.i?' class="on"':'')+'></i>').join('')+'</div><button class="btn ink block" data-a="'+(last?'close':'guidenext')+'">'+(last?'Začít':'Další')+'</button>'+(last?'':'<button class="btn ghost block" data-a="close">Přeskočit</button>')+'</div>';}
  if(sh.type==='cpick'){const np=nextPlan(),p=myPlan().slice().sort((a,b)=>(np&&b.templateId===np.templateId)-(np&&a.templateId===np.templateId));
@@ -1750,7 +1784,10 @@ const A={
  painclear(){const e=S.active.ex[UI.sheet.i];delete e.pain;UI.sheet=null;save();rerender();},
  sugyes(i){const e=S.active.ex[+i];if(!e.sug)return;e.sets.forEach((x,k)=>{if(!x.done&&x.int!=='Rozcvička'&&toKg(x.kg)>=e.sug.from-0.01)x.kg=wnum(e.sug.kg);});e.sugDone=1;save();rerender();toast('Váha upravená na '+W(e.sug.kg));},
  sugno(i){const e=S.active.ex[+i];e.sugDone=1;save();rerender();},
- sharesum(sid){const s=S.sessions.find(x=>x.id===sid);if(s)shareSummary(s);},
+ sharesum(sid){const s=S.sessions.find(x=>x.id===sid);if(!s)return;UI.sheet={type:'story',sid:sid,bg:false,pick:storyBest(storySets(s))};rerender();},
+ stpick(v){if(UI.sheet&&UI.sheet.type==='story'){UI.sheet.pick=+v;rerender();}},
+ stbg(v){if(UI.sheet&&UI.sheet.type==='story'){UI.sheet.bg=v==='1';rerender();}},
+ stsave(){const sh=UI.sheet,s=sh&&S.sessions.find(x=>x.id===sh.sid);if(s)storySave(s,sh.pick,sh.bg);},
  ciopen(){UI.ci={sleep:0,stress:0,diet:0,kg:'',photos:[null,null,null],note:''};UI.sheet={type:'checkin'};rerender();},
  ciset(v){const [k,n]=v.split(':');UI.ci[k]=+n;rerender();},
  cisave(){const ci=UI.ci;if(!ci.sleep||!ci.stress||!ci.diet)return toast('Odpověz na všechny tři otázky');const kg=toKg(ci.kg);const m={clientId:S.cme,date:new Date().toISOString(),kind:'checkin',sleep:ci.sleep,stress:ci.stress,diet:ci.diet,photos:ci.photos.filter(Boolean),note:(ci.note||'').trim(),seen:false};if(kg>0)m.kg=kg;S.metrics.push(m);UI.sheet=null;UI.ci=null;save();rerender();toast('Check-in odeslán trenérovi');trainerReply(S.cme,'Díky za check-in, mrknu na to 👍');},
@@ -1894,7 +1931,7 @@ const A={
  finfeel(v){UI.sheet.feel=+v;rerender();},
  finsave(){const w=S.active,sh=UI.sheet;if(!sh.feel)return toast('Vyber, jak ses cítil(a)');
   const before=sessOf(S.cme).length,stB=streakWeeks(S.cme);const ex=w.ex.map(e=>inU(e.u,()=>({name:e.name,uni:e.uni||undefined,unit:e.u&&e.u!==gUnit()?e.u:undefined,from:e.orig?e.orig.name:undefined,pain:e.pain||undefined,timed:e.timed,sets:e.sets.filter(x=>x.done).map(x=>Object.assign({reps:e.timed?(parseInt(x.plan)||0):(parseInt(x.reps)||parseInt(x.plan)||0),kg:e.timed?0:toKg(x.kg)},x.rir&&x.rir!=='Cluster'?{rir:x.rir}:{},x.int==='Cluster'?{cl:1}:{},x.up?{up:true}:{}))}))).filter(e=>e.sets.length);
-  const t=tpl(w.tid);const ss={id:'s'+uid(),clientId:S.cme,templateId:w.tid,title:t?t.name:'Trénink',date:new Date().toISOString(),dur:Math.max(1,Math.round(elapsed()/60)),feel:sh.feel,clientNote:(sh.note||'').trim(),ex:ex,comments:[],seen:false};
+  const t=tpl(w.tid);const ss={id:'s'+uid(),clientId:S.cme,templateId:w.tid,title:t?t.name:'Trénink',date:new Date().toISOString(),dur:Math.max(1,Math.round(elapsed()/60)),secs:elapsed(),feel:sh.feel,clientNote:(sh.note||'').trim(),ex:ex,comments:[],seen:false};
   S.sessions.push(ss);S.active=null;const nA=before+1,stA=streakWeeks(S.cme);const nb=BADGES.filter(x=>nA>=x[0]&&before<x[0]).concat(SBADGES.filter(x=>stA>=x[0]&&stB<x[0]));UI.sheet={type:'summary',sid:ss.id,b:nb};save();UI.tab='plan';UI.cplanSeg='history';UI.stack=['session:'+ss.id];render('push');trainerComment(ss.id);},
  weightsheet(){const wt=weightTrend(S.cme);UI.wkg=wt?wnum(wt.last):'';UI.sheet={type:'weight'};rerender();setTimeout(()=>{const el=document.getElementById('w-kg');if(el){el.focus();el.select();}},350);},
  wsave(){const kg=toKg(UI.wkg);if(!kg)return toast('Zadej váhu');S.metrics=S.metrics.filter(m=>!(m.clientId===S.cme&&m.kind!=='checkin'&&daysAgo(m.date)===0));S.metrics.push({clientId:S.cme,date:new Date().toISOString(),kg:kg});save();UI.sheet=null;rerender();toast('Váha uložena');},
