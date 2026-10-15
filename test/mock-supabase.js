@@ -14,11 +14,11 @@ function isMyClient(d,u,cid){const c=tbl(d,'clients').find(x=>x.id===cid);return
 function visible(d,t,r,u){if(!u)return false;
  switch(t){case 'trainers':return r.id===u||r.id===myTrainer(d,u)||isOwner(d,u);
   case 'clients':return r.id===u||r.trainer_id===u||isOwner(d,u);
-  case 'templates':case 'exercises':return r.trainer_id===u||r.trainer_id===myTrainer(d,u);
+  case 'templates':case 'exercises':return r.trainer_id===u||(!r.client_id&&r.trainer_id===myTrainer(d,u))||r.client_id===u;
   case 'notes':return r.trainer_id===u&&isMyClient(d,u,r.client_id);
   case 'reports':return isOwner(d,u);
   default:return r.client_id===u||isMyClient(d,u,r.client_id)||(t==='sessions'&&isOwner(d,u));}}
-function writable(d,t,r,u){if(t==='reports')return true;if(t==='templates'||t==='exercises')return r.trainer_id===u;if(t==='trainers')return r.id===u;if(t==='clients')return r.id===u||r.trainer_id===u;return visible(d,t,r,u);}
+function writable(d,t,r,u){if(t==='reports')return true;if(t==='templates'||t==='exercises')return r.trainer_id===u||(r.client_id===u&&(!r.trainer_id||r.trainer_id===myTrainer(d,u)));if(t==='trainers')return r.id===u;if(t==='clients')return r.id===u||r.trainer_id===u;return visible(d,t,r,u);}
 function emit(table,eventType,nw,old){const ev={table,eventType,new:nw,old:old,n:Math.random()};LS.setItem('mockev',JSON.stringify(ev));window.dispatchEvent(new CustomEvent('mockev',{detail:ev}));}
 class Q{constructor(t){this.t=t;this.f=[];this.op='select';}
  select(){if(this.op==='select')this.op='select';return this;}
@@ -62,9 +62,9 @@ function rpc(name,args){const d=db(),u=uidOf(),s=sess();const norm=c=>String(c||
  else if(name==='register_trainer'&&(d.removed||[]).includes(u)){r.error={message:'account removed'};}
  else if(name==='register_trainer'){if(!tbl(d,'trainers').find(x=>x.id===u)){const row={id:u,code:code(),is_owner:false,data:{name:args.p_name||'Trenér',email:s.user.email,spec:args.p_spec||'',bio:'',photo:null,joined:new Date().toISOString()}};tbl(d,'trainers').push(row);put(d);emit('trainers','INSERT',row);}}
  else if(name==='register_client'){const t=tr(args.p_code);if(!t)r.error={message:'bad code'};else{const row={id:u,trainer_id:t.id,data:{name:args.p_name||'Klient',goal:args.p_goal||'Zatím nevyplněno',email:s.user.email,joined:new Date().toISOString(),target:3,photo:null,status:'active'}};tbl(d,'clients').push(row);put(d);emit('clients','INSERT',row);r.data={id:t.id,name:t.data.name};}}
- else if(name==='change_trainer'){const t=tr(args.p_code);const c=tbl(d,'clients').find(x=>x.id===u);if(!t||!c)r.error={message:'bad code'};else{c.trainer_id=t.id;put(d);emit('clients','UPDATE',c);r.data={id:t.id,name:t.data.name};}}
+ else if(name==='change_trainer'){const t=tr(args.p_code);const c=tbl(d,'clients').find(x=>x.id===u);if(!t||!c)r.error={message:'bad code'};else{c.trainer_id=t.id;['templates','exercises'].forEach(k=>tbl(d,k).filter(x=>x.client_id===u).forEach(x=>{x.trainer_id=t.id;emit(k,'UPDATE',x);}));put(d);emit('clients','UPDATE',c);r.data={id:t.id,name:t.data.name};}}
  else if(name==='remove_client'||name==='remove_trainer'){
-  const detach=cid=>{['assignments','messages','notes'].forEach(t=>{const del=tbl(d,t).filter(r=>r.client_id===cid);d.t[t]=tbl(d,t).filter(r=>r.client_id!==cid);del.forEach(r=>emit(t,'DELETE',null,{id:r.id}));});const c=tbl(d,'clients').find(x=>x.id===cid);c.trainer_id=null;emit('clients','UPDATE',c);};
+  const detach=cid=>{['assignments','messages','notes'].forEach(t=>{const del=tbl(d,t).filter(r=>r.client_id===cid);d.t[t]=tbl(d,t).filter(r=>r.client_id!==cid);del.forEach(r=>emit(t,'DELETE',null,{id:r.id}));});['templates','exercises'].forEach(k=>tbl(d,k).filter(x=>x.client_id===cid).forEach(x=>{x.trainer_id=null;emit(k,'UPDATE',x);}));const c=tbl(d,'clients').find(x=>x.id===cid);c.trainer_id=null;emit('clients','UPDATE',c);};
   if(name==='remove_client'){const c=tbl(d,'clients').find(x=>x.id===args.p_client);if(!c||c.trainer_id!==u)r.error={message:'not your client'};else detach(c.id);}
   else{if(!isOwner(d,u)||args.p_trainer===u)r.error={message:'owner only'};else{const cs=tbl(d,'clients').filter(x=>x.trainer_id===args.p_trainer);cs.forEach(c=>detach(c.id));
    ['notes','templates','exercises'].forEach(t=>{const del=tbl(d,t).filter(x=>x.trainer_id===args.p_trainer);d.t[t]=tbl(d,t).filter(x=>x.trainer_id!==args.p_trainer);del.forEach(x=>emit(t,'DELETE',null,{id:x.id}));});

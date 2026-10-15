@@ -34,7 +34,7 @@ loadLocal();
 function bindS(){
  Object.defineProperty(S,'trainer',{configurable:true,enumerable:false,get(){return S.trainers.find(t=>t.id===S.me)||{id:S.me,name:'Trenér',spec:'',code:'',photo:null};}});
  Object.defineProperty(S,'clients',{configurable:true,enumerable:false,get(){return S.clientsAll.filter(c=>c.trainerId===S.me);}});
- Object.defineProperty(S,'templates',{configurable:true,enumerable:false,get(){return S.templatesAll.filter(t=>t.tr===S.me);},set(v){S.templatesAll=S.templatesAll.filter(t=>t.tr!==S.me).concat(v);}});
+ Object.defineProperty(S,'templates',{configurable:true,enumerable:false,get(){return S.templatesAll.filter(t=>t.tr===S.me&&!t.cl);},set(v){S.templatesAll=S.templatesAll.filter(t=>t.tr!==S.me||t.cl).concat(v);}});
 }
 bindS();
 function ensureSettings(){if(!S.cnotif)S.cnotif={on:true,plan:true,message:true,comment:true};if(!S.units)S.units='kg';if(!S.notif)S.notif={on:true,workout:true,client:true,message:true};if(!S.exCustom)S.exCustom=[];if(!S.reports)S.reports=[];}
@@ -45,15 +45,18 @@ ensureSettings();
 function strip(o,keys){const c={};Object.keys(o).forEach(k=>{if(!keys.includes(k)&&o[k]!==undefined)c[k]=o[k];});return c;}
 function stable(v){if(Array.isArray(v))return '['+v.map(stable).join(',')+']';if(v&&typeof v==='object'){return '{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';}return JSON.stringify(v===undefined?null:v);}
 const byAt=(a,b)=>String(a.data.at||'').localeCompare(String(b.data.at||''));
+/* templates/exercises: a trainer writes the rows under their id (incl. comments on clients' own rows); a client writes only rows they made, tied to their current trainer */
+function ownRows(list){return (isC()?list.filter(t=>t.cl===S.uid):list.filter(t=>t.tr===S.uid)).map(t=>({id:t.id,trainer_id:isC()?(S.me||null):t.tr,client_id:t.cl||null,data:strip(t,['id','tr','cl'])}));}
+function fromOwnRow(r){const o=Object.assign({},r.data,{id:r.id,tr:r.trainer_id});if(r.client_id)o.cl=r.client_id;return o;}
 const TB={
  trainers:{cols:['id','data'],get:()=>S.trainers.filter(t=>t.id===S.uid).map(t=>({id:t.id,data:strip(t,['id','code','owner'])})),
   set:rows=>{S.trainers=rows.map(r=>Object.assign({},r.data,{id:r.id,code:r.code,owner:!!r.is_owner}));}},
  clients:{cols:['id','data'],get:()=>S.clientsAll.filter(c=>c.id===S.uid||c.trainerId===S.uid).map(c=>({id:c.id,data:strip(c,['id','trainerId'])})),
   set:rows=>{S.clientsAll=rows.map(r=>Object.assign({},r.data,{id:r.id,trainerId:r.trainer_id}));}},
- templates:{cols:['id','trainer_id','data'],get:()=>S.templatesAll.map(t=>({id:t.id,trainer_id:t.tr,data:strip(t,['id','tr'])})),
-  set:rows=>{S.templatesAll=rows.map(r=>Object.assign({},r.data,{id:r.id,tr:r.trainer_id}));}},
- exercises:{cols:['id','trainer_id','data'],get:()=>S.exCustom.map(t=>({id:t.id,trainer_id:t.tr,data:strip(t,['id','tr'])})),
-  set:rows=>{S.exCustom=rows.map(r=>Object.assign({},r.data,{id:r.id,tr:r.trainer_id}));}},
+ templates:{cols:['id','trainer_id','client_id','data'],get:()=>ownRows(S.templatesAll),
+  set:rows=>{S.templatesAll=rows.map(fromOwnRow);}},
+ exercises:{cols:['id','trainer_id','client_id','data'],get:()=>ownRows(S.exCustom),
+  set:rows=>{S.exCustom=rows.map(fromOwnRow);}},
  sessions:{cols:['id','client_id','data'],get:()=>S.sessions.map(x=>({id:x.id,client_id:x.clientId,data:strip(x,['id','clientId'])})),
   set:rows=>{S.sessions=rows.map(r=>Object.assign({},r.data,{id:r.id,clientId:r.client_id}));}},
  metrics:{cols:['id','client_id','data'],get:()=>S.metrics.map(x=>{if(!x.id)x.id='m'+uid()+uid();return {id:x.id,client_id:x.clientId,data:strip(x,['id','clientId'])};}),
@@ -273,9 +276,7 @@ rep2("function applyChange(p){const t=p.table;if(!TB[t])return;",
 rep2("if(r.error)return bootFail('Účet se nepodařilo dokončit. '+r.error.message);",
      "if(r.error)return bootFail(/account removed/.test(r.error.message)?'Tento účet byl odebrán.':'Účet se nepodařilo dokončit. '+r.error.message);")
 rep2("return bootFail(/bad code/.test(r.error.message)?","return bootFail(/account removed/.test(r.error.message)?'Tento účet byl odebrán.':/bad code/.test(r.error.message)?")
-# sync hardening: clients never write templates/exercises; deleted rows leave local state at once; a reload is snapshotted before anything can flush
-rep2(" templates:{cols:['id','trainer_id','data'],get:()=>S.templatesAll.map("," templates:{cols:['id','trainer_id','data'],get:()=>isC()?[]:S.templatesAll.filter(t=>t.tr===S.uid).map(")
-rep2(" exercises:{cols:['id','trainer_id','data'],get:()=>S.exCustom.map("," exercises:{cols:['id','trainer_id','data'],get:()=>isC()?[]:S.exCustom.filter(t=>t.tr===S.uid).map(")
+# sync hardening: clients write only their own templates/exercises (see ownRows); deleted rows leave local state at once; a reload is snapshotted before anything can flush
 rep2("if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);}",
      "if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);TB[t].set([...ROWS[t].values()]);ensureBuckets();}")
 rep2("TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();}","TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();snapshot();}")
