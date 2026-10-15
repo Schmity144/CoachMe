@@ -25,7 +25,7 @@ cut('/* ---------- state ---------- */','function save(){',r'''/* ---------- sta
 const KEY='coachme-local-v1';
 const SB_URL='https://iqrtiypkczsarqimbnqj.supabase.co',SB_KEY='sb_publishable_fsdwgYn2Uvw0jtQw2pqcfg_M1m_1tR0';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor','guide'];
+const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor','guide','lang'];
 function blank(){return {v:7,authed:false,role:'trainer',me:null,cme:null,uid:null,theme:'system',trainers:[],clientsAll:[],templatesAll:[],sessions:[],metrics:[],assign:[],messages:{},notes:{},exCustom:[],reports:[]};}
 let S=blank();
 function loadLocal(){try{const L=JSON.parse(localStorage.getItem(KEY)||'null');if(L)LOCAL_KEYS.forEach(k=>{if(L[k]!==undefined)S[k]=L[k];});}catch(e){}}
