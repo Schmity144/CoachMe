@@ -587,7 +587,7 @@ function fmtT(iso){const d=new Date(iso);return d.getHours()+':'+String(d.getMin
 function initials(n){return n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();}
 function U(){return S.units==='lbs'?'lb':'kg';}
 function cv(kg){return S.units==='lbs'?kg*2.20462:kg;}
-function wnum(kg){const v=cv(kg);return S.units==='lbs'?String(Math.round(v)):String(Math.round(v*10)/10).replace('.',',');}
+function wnum(kg){const v=cv(kg);return String(Math.round(v*100)/100).replace('.',',');}
 function W(kg){return wnum(kg)+' '+U();}
 function fmtKg(n){return Math.round(n).toLocaleString('cs-CZ').replace(/ /g,' ');}
 function genCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
@@ -1418,9 +1418,9 @@ function lastFor(cid,name){const s=sessOf(cid).find(q=>q.ex.some(e=>exK(e)===nam
 function fmtSet(x){return (x.kg?wnum(x.kg)+'×':'')+x.reps;}
 /* improvement vs. the same set last time: more weight, more reps at the same weight, or more reps in reserve at the same weight and reps */
 function improvement(x,ls){if(!ls||x.int==='Rozcvička')return null;const kg=toKg(x.kg),reps=parseInt(x.reps)||parseInt(x.plan)||0;if(!reps)return null;
- if(kg>ls.kg+.01&&reps>=ls.reps-2)return '+'+String(Math.round(cv(kg-ls.kg)*10)/10).replace('.',',')+' '+U();
- if(Math.abs(kg-ls.kg)<.01&&reps>ls.reps)return '+'+(reps-ls.reps)+' '+pl(reps-ls.reps,'opakování','opakování','opakování');
- if(Math.abs(kg-ls.kg)<.01&&reps===ls.reps&&x.rir in RIRN&&ls.rir in RIRN&&RIRN[x.rir]>RIRN[ls.rir])return 'Lehčí než minule (+'+(RIRN[x.rir]-RIRN[ls.rir])+' RIR)';
+ if(kg>ls.kg+.001&&reps>=ls.reps-2)return '+'+String(Math.round(cv(kg-ls.kg)*100)/100).replace('.',',')+' '+U();
+ if(Math.abs(kg-ls.kg)<.001&&reps>ls.reps)return '+'+(reps-ls.reps)+' '+pl(reps-ls.reps,'opakování','opakování','opakování');
+ if(Math.abs(kg-ls.kg)<.001&&reps===ls.reps&&x.rir in RIRN&&ls.rir in RIRN&&RIRN[x.rir]>RIRN[ls.rir])return 'Lehčí než minule (+'+(RIRN[x.rir]-RIRN[ls.rir])+' RIR)';
  return null;}
 function fireAt(el,label){if(!el)return;const ab=app.getBoundingClientRect(),r=el.getBoundingClientRect();const d=document.createElement('div');d.className='fire';d.style.left=Math.min(r.left-ab.left+r.width/2,ab.width-Math.max(60,label.length*4+24))+'px';d.style.top=(r.top-ab.top+r.height/2-10)+'px';
  d.innerHTML='<span class="f">🔥</span><span class="l">'+esc(label)+'</span>'+Array.from({length:8},(_,k)=>{const a=k/8*Math.PI*2;return '<i style="--dx:'+Math.round(Math.cos(a)*46)+'px;--dy:'+Math.round(Math.sin(a)*40-20)+'px;animation-delay:'+(k%3)*40+'ms"></i>';}).join('');
@@ -1451,7 +1451,7 @@ function calCard(cid){const ss=sessOf(cid),by={};ss.forEach(s=>{const k=dkey(s.d
  return '<div class="glass card stack" style="gap:10px"><button class="row between" data-a="caltoggle" style="width:100%;text-align:left" aria-expanded="'+!!open+'"><span class="row" style="gap:8px">'+ic('cal',18)+'<span class="title-m">Kalendář</span></span><span class="row tiny muted" style="gap:4px">'+(open?'Sbalit':'Celý měsíc')+'<span style="display:inline-flex;transform:rotate('+(open?'-90':'90')+'deg);transition:transform .25s">'+ic('chev',16)+'</span></span></button>'+body+list+'</div>';}
 function rpeLabel(n){return n<=4?'Lehké, šlo by toho ještě hodně':n<=6?'Střední zátěž':n<=8?'Těžké, pár opakování v rezervě':n===9?'Velmi těžké, skoro na maximum':'Maximum, víc to nešlo';}
 function lbsStep(){return S.units==='lbs'?5:2.5;}
-function toKg(v){v=parseFloat(String(v).replace(',','.'))||0;return S.units==='lbs'?Math.round(v/2.20462*10)/10:v;}
+function toKg(v){v=parseFloat(String(v).replace(',','.'))||0;return S.units==='lbs'?Math.round(v/2.20462*1e4)/1e4:Math.round(v*100)/100;}
 
 /* ---------- sheets ---------- */
 function sheetHTML(){
@@ -1771,7 +1771,7 @@ const A={
   UI.sheet={type:'wopad',i:i,k:k,f:'kg',fresh:true,buf:{kg:x.kg||'',reps:x.reps||String(parseInt(x.plan)||''),rir:x.int==='Rozcvička'?'':x.rir||''}};rerender();},
  wopadf(v){UI.sheet.f=v;UI.sheet.fresh=true;rerender();},
  wokey(v){const sh=UI.sheet,f=sh.f;let cur=sh.fresh?'':String(sh.buf[f]||'');sh.fresh=false;
-  if(v==='del')cur=cur.slice(0,-1);else if(v===','){if(f==='reps'||cur.includes(','))return;cur=(cur||'0')+',';}else{if(cur.replace(',','').length>=5)return;cur=cur==='0'?v:cur+v;if(/,\d\d$/.test(cur))cur=cur.slice(0,-1);}
+  if(v==='del')cur=cur.slice(0,-1);else if(v===','){if(f==='reps'||cur.includes(','))return;cur=(cur||'0')+',';}else{if(cur.replace(',','').length>=6)return;cur=cur==='0'?v:cur+v;if(/,\d\d\d$/.test(cur))cur=cur.slice(0,-1);}
   sh.buf[f]=cur;rerender();},
  wopadq(v){const sh=UI.sheet,e=S.active.ex[sh.i],x=e.sets[sh.k],f=sh.f;sh.fresh=true;
   if(v==='last'){const ls=lastFor(S.cme,exK(e)),p=ls&&(ls.sets[sh.k]||ls.sets[ls.sets.length-1]);if(!p){toast('Tenhle cvik děláš poprvé');return;}sh.buf.kg=p.kg?wnum(p.kg):'';sh.buf.reps=String(p.reps||'');if(p.rir&&x.int!=='Rozcvička')sh.buf.rir=p.rir;}
