@@ -1124,5 +1124,17 @@
 "prosince": "December",
 "sobota": "Saturday",
 "v sobotu": "on Saturday",
-"× od": "× since"
+"× od": "× since",
+"Pořadí": "Order",
+"Upravit pořadí": "Reorder",
+"Pořadí cviků": "Exercise order",
+"Táhni za úchyt": "Drag by the handle",
+"Podrž úchyt vpravo a přetáhni cvik. Klepni na Hotovo a vrátíš se k zapisování. Trenér uvidí, v jakém pořadí jsi cvičil(a).": "Hold the handle on the right and drag the exercise. Tap Done to go back to logging. Your coach will see the order you trained in.",
+"hotovo": "done",
+"Váhy v": "Weights in",
+"teď v": "now in",
+"příště taky": "next time too",
+"předvyplněno z": "prefilled from",
+"poprvé": "first time",
+"Přesunout": "Move"
 }
