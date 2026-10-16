@@ -486,7 +486,15 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 .prprev{display:flex;justify-content:center}.prprev img{height:min(52vh,460px);width:auto;aspect-ratio:9/16;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .prgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.prgrid button{padding:0;border-radius:12px;overflow:hidden;line-height:0;box-shadow:inset 0 0 0 1px var(--line,rgba(127,127,127,.25));transition:transform .15s}.prgrid button img{width:100%;aspect-ratio:9/16;display:block}.prgrid button.on{box-shadow:0 0 0 2.5px var(--accent);transform:scale(.97)}.prrow{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:2px 2px -2px}
 .wosince{display:flex;align-items:center;gap:8px;margin:-2px 0 0 38px;padding:2px 0;font-size:13px;color:var(--accent)}.wosince span{font-weight:600;color:var(--ink);opacity:.6}.wosince b{font-weight:800;font-variant-numeric:tabular-nums}
-[data-a=open][data-v^="client:"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;transition:transform .2s}.cm-press{transform:scale(.97)}
+[data-a=open][data-v^="client:"],[data-a=open][data-v^="template:"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;transition:transform .2s}.cm-press{transform:scale(.97)}
+.exstar{display:flex;align-items:center;justify-content:center;width:38px;height:38px;margin:-6px -4px -6px 0;flex:none;color:var(--ink3);border-radius:50%}.exstar:active{transform:scale(.85)}.exstar.on{color:var(--accent)}.exstar.on svg{fill:currentColor}
+.mtile.fv{color:var(--accent)}.mtile.fv svg{fill:currentColor}
+#cmenu .cm-menu button.danger{color:var(--bad)}
+.li.csel-on{background:rgba(127,127,127,.1)}
+.bulkbar{position:absolute;left:14px;right:14px;bottom:18px;z-index:40;border-radius:28px;display:flex;gap:8px;padding:8px;animation:cmPop .22s cubic-bezier(.2,.9,.3,1.2)}.bulkbar .btn{flex:1;min-width:0;padding:0 10px;white-space:nowrap}.bulkbar .btn[disabled]{opacity:.4}
+@media (max-width:500px){.bulkbar{bottom:calc(env(safe-area-inset-bottom,0px) + 10px)}}
+.avstack{display:flex}.avstack>*{margin-right:-8px;box-shadow:0 0 0 2px var(--glass-strong,#111);border-radius:50%}
+.view.sbing{box-shadow:-12px 0 30px rgba(0,0,0,.35);will-change:transform;animation:none!important}
 #cmenu{position:fixed;inset:0;z-index:200;animation:cmIn .18s ease-out}#cmenu.out{opacity:0;transition:opacity .15s}@keyframes cmIn{from{opacity:0}to{opacity:1}}
 #cmenu .cm-bg{position:absolute;inset:0;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #cmenu .cm-row{position:absolute;border-radius:22px;transform:scale(1.03);box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden;pointer-events:none}#cmenu .cm-row>*{border:0!important;width:100%}
@@ -572,7 +580,8 @@ eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12"
  filter:'<path d="M4 6.5h16M7 12h10M10 17.5h4"/>',
  bell:'<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
  scale:'<path d="M5 20.5h14M12 4v16.5M6 8h12M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>',
- link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'
+ link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+ star:'<path d="M12 3.6l2.6 5.2 5.8.9-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.9z" stroke-linejoin="round"/>'
 };
 function ic(n,s,w){s=s||22;w=w||1.7;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[n]||'')+'</svg>';}
 
@@ -858,27 +867,35 @@ function scrHome(){
  h+='</div></div></div>';return h;
 }
 function nrm(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function lev1(a,b){if(a===b)return true;const la=a.length,lb=b.length;if(Math.abs(la-lb)>1)return false;let i=0;while(i<la&&i<lb&&a[i]===b[i])i++;
+ if(la===lb)return a.slice(i+1)===b.slice(i+1)||(a[i]===b[i+1]&&a[i+1]===b[i]&&a.slice(i+2)===b.slice(i+2));return la>lb?a.slice(i+1)===b.slice(i):a.slice(i)===b.slice(i+1);}
+/* search: ignores accents and case; words of 4+ letters may have one typo (drep, drpe → Dřep) */
+function fmatch(text,q){q=nrm(q).trim();if(!q)return true;const t=nrm(text);if(t.includes(q))return true;const toks=t.split(/[^a-z0-9]+/).filter(Boolean);
+ return q.split(/\s+/).every(w=>t.includes(w)||(w.length>=4&&toks.some(k=>[0,1,-1].some(d=>lev1(w,k.slice(0,w.length+d))))));}
 function hlite(text,q){const i=nrm(text).indexOf(q);if(i<0)return esc(text);return esc(text.slice(0,i))+'<mark>'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length));}
 function homeSearch(raw){const q=nrm(raw.trim());if(!q)return '';let h='';
- const cl=S.clients.filter(c=>nrm(c.name).includes(q)||nrm(c.goal).includes(q)).slice(0,6);
+ const cl=S.clients.filter(c=>fmatch(c.name+' '+(c.goal||''),q)).slice(0,6);
  if(cl.length)h+='<div class="sec"><h3>Klienti</h3></div><div class="glass list">'+cl.map(c=>'<div class="li"><button class="row grow" style="gap:12px;text-align:left;min-width:0" data-a="open" data-v="client:'+c.id+'">'+avatar(c,40)+'<div class="grow" style="min-width:0"><div class="ellip" style="font-weight:500">'+hlite(c.name,q)+'</div><div class="tiny muted ellip">'+esc(c.goal||'')+'</div></div></button><button class="iconbtn" style="flex:none" data-a="open" data-v="chat:'+c.id+'" aria-label="Napsat zprávu">'+ic('chat',18)+'</button></div>').join('')+'</div>';
- const tl=S.templates.map(t=>{if(nrm(t.name).includes(q))return {t:t};const e=t.ex.find(e=>nrm(e.name).includes(q));return e?{t:t,e:e}:null;}).filter(Boolean).slice(0,6);
+ const tl=S.templates.map(t=>{if(fmatch(t.name,q))return {t:t};const e=t.ex.find(e=>fmatch(e.name,q));return e?{t:t,e:e}:null;}).filter(Boolean).slice(0,6);
  if(tl.length)h+='<div class="sec"><h3>Šablony</h3></div><div class="glass list">'+tl.map(x=>'<button class="li plain" data-a="open" data-v="template:'+x.t.id+'"><div class="grow" style="min-width:0"><div class="ellip" style="font-weight:500">'+hlite(x.t.name,q)+'</div><div class="tiny muted ellip">'+(x.e?'Obsahuje: '+hlite(x.e.name,q):esc(x.t.cat)+' · '+x.t.ex.length+' cviků')+'</div></div>'+ic('chev',18)+'</button>').join('')+'</div>';
- const ml=[];S.clients.forEach(c=>(S.messages[c.id]||[]).forEach(m=>{if(m.text&&nrm(m.text).includes(q))ml.push({c:c,m:m});}));ml.sort((a,b)=>b.m.at.localeCompare(a.m.at));
+ const ml=[];S.clients.forEach(c=>(S.messages[c.id]||[]).forEach(m=>{if(m.text&&fmatch(m.text,q))ml.push({c:c,m:m});}));ml.sort((a,b)=>b.m.at.localeCompare(a.m.at));
  if(ml.length)h+='<div class="sec"><h3>Zprávy</h3></div><div class="glass list">'+ml.slice(0,8).map(x=>'<button class="li plain" data-a="open" data-v="chat:'+x.c.id+'">'+avatar(x.c,36)+'<div class="grow" style="min-width:0"><div class="row between" style="gap:8px"><span class="ellip" style="font-weight:500">'+esc(x.c.name)+'</span><span class="tiny faint" style="flex:none">'+esc(fmtD(x.m.at))+'</span></div><div class="tiny muted ellip">'+(x.m.by==='trainer'?'Ty: ':'')+hlite(x.m.text,q)+'</div></div></button>').join('')+'</div>';
  if(!h)h='<div class="glass card" style="text-align:center"><div class="muted small">Nic nenalezeno pro „'+esc(raw.trim())+'“</div></div>';
  return h;}
 function scrClients(){
  const f=UI.clientFilter,q=UI.q.trim().toLowerCase();
  const list=S.clients.filter(c=>c.status==='active').map(c=>({c:c,s:status(c.id),a:adherence(c.id),d:lastDays(c.id)}))
-  .filter(x=>(f==='all'||(f==='ok'&&x.s.k==='ok')||(f==='att'&&(x.s.k==='idle'||x.s.k==='low'))||(f==='new'&&x.s.k==='new'))&&(!q||x.c.name.toLowerCase().includes(q)||x.c.goal.toLowerCase().includes(q)))
+  .filter(x=>(f==='all'||(f==='ok'&&x.s.k==='ok')||(f==='att'&&(x.s.k==='idle'||x.s.k==='low'))||(f==='new'&&x.s.k==='new'))&&(!q||fmatch(x.c.name+' '+(x.c.goal||''),q)))
   .sort((a,b)=>(a.d==null?99:a.d)-(b.d==null?99:b.d));
  const cnt=k=>S.clients.filter(c=>{const s=status(c.id).k;return k==='att'?(s==='idle'||s==='low'):s===k;}).length;
  let h='<div class="view" id="view"><div class="stack">';
- h+='<div class="row between"><h1 class="title-xl">Klienti</h1><button class="iconbtn glass" data-a="sheet" data-v="invite" aria-label="Pozvat klienta">'+ic('plus',22,2)+'</button></div>';
+ const sel=UI.csel;
+ if(sel)h+='<div class="row between" style="min-height:44px"><button class="btn ghost sm" data-a="cselx">Zrušit</button><div class="title-m num">Vybráno '+sel.length+'</div><button class="btn ghost sm" data-a="cselall">'+(sel.length&&sel.length===S.clients.filter(c=>c.status==='active').length?'Nic':'Vše')+'</button></div>';
+ else h+='<div class="row between"><h1 class="title-xl">Klienti</h1><div class="row" style="gap:8px"><button class="btn ghost sm" data-a="csel">Vybrat</button><button class="iconbtn glass" data-a="sheet" data-v="invite" aria-label="Pozvat klienta">'+ic('plus',22,2)+'</button></div></div>';
  h+='<label class="glass row" style="border-radius:999px;padding:0 16px;height:46px" for="q">'+ic('search',18)+'<input id="q" data-in="q" value="'+esc(UI.q)+'" placeholder="Hledat jméno nebo cíl" style="border:0;background:transparent;outline:none;flex:1;height:100%;font-size:16px;min-width:0"></label>';
  h+='<div class="chips">'+[['all','Všichni',S.clients.length],['ok','Aktivní',cnt('ok')],['att','Pozornost',cnt('att')],['new','Noví',cnt('new')]].map(x=>'<button class="chip'+(f===x[0]?' on':'')+'" data-a="cfilter" data-v="'+x[0]+'">'+x[1]+' <span class="num" style="opacity:.6">'+x[2]+'</span></button>').join('')+'</div>';
- h+=list.length?'<div class="glass list">'+list.map(x=>{const wt=weightTrend(x.c.id);return '<button class="li" data-a="open" data-v="client:'+x.c.id+'">'+avatar(x.c,44)+'<div class="grow"><div class="row" style="gap:6px"><span class="ellip" style="font-weight:500">'+esc(x.c.name)+'</span>'+(unread(x.c.id)?'<span class="dot" aria-label="nepřečtená zpráva"></span>':'')+'</div><div class="tiny muted ellip">'+esc(x.c.goal)+'</div><div class="tiny faint" style="margin-top:2px">'+(x.d==null?'Zatím bez tréninku':'Trénoval(a) '+rel(sessOf(x.c.id)[0].date))+'</div></div>'+ring(x.a,40)+'</button>';}).join('')+'</div>':'<div class="glass card empty">Nikoho takového jsme nenašli.</div>';
+ h+=list.length?'<div class="glass list">'+list.map(x=>{const wt=weightTrend(x.c.id),on=sel&&sel.includes(x.c.id);return '<button class="li'+(on?' csel-on':'')+'" '+(sel?'data-a="cselt" data-v="'+x.c.id+'"':'data-a="open" data-v="client:'+x.c.id+'"')+'>'+(sel?'<span class="check'+(on?' on':'')+'">'+(on?ic('check',14,2.6):'')+'</span>':'')+avatar(x.c,44)+'<div class="grow"><div class="row" style="gap:6px"><span class="ellip" style="font-weight:500">'+esc(x.c.name)+'</span>'+(unread(x.c.id)?'<span class="dot" aria-label="nepřečtená zpráva"></span>':'')+'</div><div class="tiny muted ellip">'+esc(x.c.goal)+'</div><div class="tiny faint" style="margin-top:2px">'+(x.d==null?'Zatím bez tréninku':'Trénoval(a) '+rel(sessOf(x.c.id)[0].date))+'</div></div>'+ring(x.a,40)+'</button>';}).join('')+'</div>':'<div class="glass card empty">Nikoho takového jsme nenašli.</div>';
+ if(sel)h+='<div style="height:70px"></div>';
  h+='<p class="tiny faint" style="text-align:center;margin:4px 20px">Číslo v kroužku je docházka: odcvičené tréninky proti plánu za poslední 4 týdny.</p>';
  h+='</div></div>';return h;
 }
@@ -1045,16 +1062,29 @@ function bodySvg(mu,sec,h){sec=sec||[];const c=MCOL[mu]||'var(--ink2)',all=mu===
 function muTile(mu,sec,sz){sz=sz||40;if(!MCOL[mu])return '<span class="mtile" style="width:'+sz+'px;height:'+sz+'px;color:var(--ink2)">'+ic('dumbbell',Math.round(sz*.45))+'</span>';return '<span class="mtile'+(sz<26?' sm':'')+'" style="width:'+sz+'px;height:'+sz+'px" title="'+esc(mu)+'">'+bodySvg(mu,sec,Math.round(sz*(sz<26?.9:.84)))+'</span>';}
 function tplMuscles(t){const m=[];t.ex.forEach(e=>{const x=libByName(e.name);if(x&&!m.includes(x.mu))m.push(x.mu);});return m;}
 function exMuTile(name,sz){const x=libByName(name);return x?muTile(x.mu,x.sec,sz):muTile('',null,sz);}
+function favList(){const f=S.exFav||{};return f[isC()?'c':'t']||[];}
+function isFav(n){return favList().includes(n);}
+function favStar(n){return '<span class="exstar'+(isFav(n)?' on':'')+'" data-a="exfav" data-v="'+esc(n)+'" role="button" aria-label="'+(isFav(n)?'Odebrat z oblíbených':'Přidat do oblíbených')+'">'+ic('star',20,1.8)+'</span>';}
+/* recently used: client = exercises from own finished workouts, trainer = exercises from recently edited templates */
+function recentEx(){const out=[],add=n=>{if(n&&!out.includes(n))out.push(n);};
+ if(isC())sessOf(S.cme).forEach(s=>(s.ex||[]).forEach(e=>add(e.name)));
+ else S.templates.slice().sort((a,b)=>String(b.upd||b.at||'').localeCompare(String(a.upd||a.at||''))).forEach(t=>t.ex.forEach(e=>add(e.name)));return out;}
+function libTop(list,rowFn){if(UI.exm||UI.exe||(UI.exq||'').trim())return '';let h='';
+ const fv=favList().map(n=>list.find(x=>x.name===n)).filter(Boolean);
+ if(fv.length)h+='<div class="musec"><span class="mtile fv" style="width:22px;height:22px">'+ic('star',13,2)+'</span>Oblíbené <span class="n">'+fv.length+'</span></div><div class="glass list">'+fv.map(rowFn).join('')+'</div>';
+ const rc=recentEx().map(n=>list.find(x=>x.name===n)).filter(x=>x&&!isFav(x.name)).slice(0,5);
+ if(rc.length)h+='<div class="musec"><span class="mtile" style="width:22px;height:22px">'+ic('clock',13,2)+'</span>Naposledy použité</div><div class="glass list">'+rc.map(rowFn).join('')+'</div>';
+ return h?h+'<div class="sec" style="margin-top:6px"><h3>Všechny cviky</h3></div>':'';}
 function libGrouped(list,rowFn){if(UI.exm||(UI.exq||'').trim())return '<div class="glass list">'+list.map(rowFn).join('')+'</div>';
- return MUSCLES.map(m=>{const g=list.filter(x=>x.mu===m);return g.length?'<div class="musec">'+muTile(m,null,22)+esc(m)+' <span class="n">'+g.length+'</span></div><div class="glass list">'+g.map(rowFn).join('')+'</div>':'';}).join('');}
+ return libTop(list,rowFn)+MUSCLES.map(m=>{const g=list.filter(x=>x.mu===m);return g.length?'<div class="musec">'+muTile(m,null,22)+esc(m)+' <span class="n">'+g.length+'</span></div><div class="glass list">'+g.map(rowFn).join('')+'</div>':'';}).join('');}
 function libMuNote(){return UI.exm?'<div class="tiny faint" style="margin:0 4px;line-height:1.4">Jen cviky, kde je '+esc(UI.exm.toLowerCase())+' hlavní sval. Vedlejší partie jsou u cviku jen pro informaci.</div>':'';}
 function muCol(m){return ['Hrudník','Záda','Ramena'].includes(m)?'var(--c-sila)':['Biceps','Triceps','Předloktí'].includes(m)?'var(--c-hyp)':m==='Břicho a střed'?'var(--c-mob)':m==='Kardio'||m==='Celé tělo'?'var(--c-kon)':'var(--c-reh)';}
-function libFiltered(){const q=(UI.exq||'').trim().toLowerCase();return libAll().filter(x=>(!q||(x.name+' '+x.mu+' '+x.eq).toLowerCase().includes(q))&&(!UI.exm||x.mu===UI.exm)&&(!UI.exe||x.eq===UI.exe));}
+function libFiltered(){const q=(UI.exq||'').trim().toLowerCase();return libAll().filter(x=>(!q||fmatch(x.name+' '+x.mu+' '+x.eq,q))&&(!UI.exm||x.mu===UI.exm)&&(!UI.exe||x.eq===UI.exe));}
 function libRow(x,act,trail){return '<button class="li" data-a="'+act+'" data-v="'+x.id+'">'+muTile(x.mu,x.sec,42)+'<div class="grow" style="min-width:0"><div class="row" style="gap:6px"><span class="ellip" style="font-weight:500">'+esc(x.name)+'</span>'+(x.custom?'<span class="pill cat '+(x.cl?'cat-kon':'cat-sila')+'" style="flex:none">'+(isC()?(x.cl?'Můj':'Od trenéra'):(x.cl?'Od klienta':'Vlastní'))+'</span>':'')+'</div><div class="tiny muted ellip"><b style="color:'+(MCOL[x.mu]||'inherit')+';font-weight:600">'+esc(x.mu)+'</b> · '+esc(x.eq)+(x.m==='time'?' · na čas':'')+'</div>'+(x.sec&&x.sec.length?'<div class="tiny faint ellip">Vedlejší: '+esc(x.sec.join(', '))+'</div>':'')+'</div>'+(trail||'')+'</button>';}
 function libFilters(){return '<label class="glass row" style="border-radius:999px;padding:0 16px;height:46px;gap:8px" for="exq">'+ic('search',18)+'<input id="exq" data-in="exq" value="'+esc(UI.exq||'')+'" placeholder="Hledat cvik, sval nebo vybavení" style="border:0;background:transparent;outline:none;flex:1;height:100%;font-size:16px;min-width:0"></label>'
  +'<div class="chips">'+['',...MUSCLES].map(m=>'<button class="chip'+((UI.exm||'')===m?' on':'')+'" data-a="exmu" data-v="'+m+'">'+(m?muTile(m,null,22):'')+(m||'Všechny partie')+'</button>').join('')+'</div>'
  +'<div class="chips">'+['',...EQUIP].map(m=>'<button class="chip'+((UI.exe||'')===m?' on':'')+'" data-a="exeq" data-v="'+m+'">'+(m||'Jakékoli vybavení')+'</button>').join('')+'</div>';}
-function libBody(act){const list=libFiltered();return libFilters()+'<div class="tiny faint" style="margin:0 4px">'+list.length+' '+pl(list.length,'cvik','cviky','cviků')+'</div>'+libMuNote()+(list.length?libGrouped(list,x=>libRow(x,act,ic('chev',18))):'<div class="glass card empty">Nic takového v knihovně není.</div>');}
+function libBody(act){const list=libFiltered();return libFilters()+'<div class="tiny faint" style="margin:0 4px">'+list.length+' '+pl(list.length,'cvik','cviky','cviků')+'</div>'+libMuNote()+(list.length?libGrouped(list,x=>libRow(x,act,favStar(x.name)+ic('chev',18))):'<div class="glass card empty">Nic takového v knihovně není.</div>');}
 function scrLibrary(){let h='<div class="view detail" id="view">'+nav('Knihovna cviků','<button class="iconbtn glass" data-a="exnew" aria-label="Nový cvik">'+ic('plus',22,2)+'</button>')+'<div class="stack"><h1 class="title-xl">Knihovna cviků</h1><p class="muted" style="margin:-4px 2px 0">Základní cviky pro všechny. Tvoje vlastní cviky vidíš jen ty a tvoji klienti.</p>';
  h+='<button class="btn ink block" data-a="exnew">'+ic('plus',18,2.2)+' Přidat vlastní cvik</button>'+libBody('exopen')+'</div></div>';return h;}
 function scrExForm(){const f=UI.exf;if(!f)return scrMissing();
@@ -1219,7 +1249,7 @@ function scrAllClients(){
  const q=(UI.acq||'').trim().toLowerCase(),f=UI.acf||'all';
  const all=S.clientsAll.filter(c=>c.trainerId&&S.trainers.some(t=>t.id===c.trainerId)&&c.status==='active');
  const tn=c=>(S.trainers.find(t=>t.id===c.trainerId)||{}).name||'';
- const rows=all.filter(c=>(f==='all'||c.trainerId===f)&&(!q||(c.name+' '+c.goal+' '+tn(c)).toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+ const rows=all.filter(c=>(f==='all'||c.trainerId===f)&&(!q||fmatch(c.name+' '+(c.goal||'')+' '+tn(c),q))).sort((a,b)=>a.name.localeCompare(b.name,'cs'));
  const trs=S.trainers.filter(t=>all.some(c=>c.trainerId===t.id));
  let h='<div class="view detail" id="view">'+nav('Klienti')+'<div class="stack"><h1 class="title-xl">Všichni klienti</h1><p class="muted" style="margin:-4px 2px 0">'+all.length+' '+pl(all.length,'klient','klienti','klientů')+' u '+trs.length+' '+pl(trs.length,'trenéra','trenérů','trenérů')+'.</p>';
  h+='<input class="input" id="ac-q" data-in="acq" type="search" placeholder="Hledat klienta nebo trenéra" value="'+esc(UI.acq||'')+'">';
@@ -1241,7 +1271,7 @@ function scrAttendance(){
 }
 function tplFolders(){const o=[];S.templates.forEach(t=>{if(t.folder&&!o.includes(t.folder))o.push(t.folder);});return o.sort((a,b)=>a.localeCompare(b,'cs'));}
 function tplMatches(t){const f=UI.tf,q=UI.tq.trim().toLowerCase();if(UI.tfold){if(UI.tfold==='__c'){if(!t.forClient)return false;}else if(t.folder!==UI.tfold)return false;}const n=S.assign.filter(a=>a.templateId===t.id).length;
- if(q&&!(t.name+' '+t.desc+' '+t.ex.map(e=>e.name).join(' ')).toLowerCase().includes(q))return false;
+ if(q&&!fmatch(t.name+' '+(t.desc||'')+' '+t.ex.map(e=>e.name).join(' '),q))return false;
  if(f.cats.length&&!f.cats.includes(t.cat))return false;
  if(f.share==='shared'&&!n)return false;if(f.share==='unshared'&&n)return false;
  if(f.media&&!t.ex.some(e=>e.media.length))return false;return true;}
@@ -1602,13 +1632,15 @@ function sheetHTML0(){
   b+='<div class="field"><label for="sh-note">Vzkaz (nepovinné)</label><input class="input" id="sh-note" data-in="sheetNote" value="'+esc(sh.note||'')+'" placeholder="Např. Začni v pondělí, váhy dle pocitu"></div><button class="btn ink block" data-a="doshare"'+(sel.length?'':' disabled style="opacity:.4"')+'>'+(sel.length?(sh.saved?'Poslat ('+sel.length+')':'Sdílet ('+sel.length+')'):'Vyber '+(sh.type==='share'?'klienty':'šablonu'))+'</button>'+(sh.saved?'<button class="btn ghost block" data-a="close">Později</button>':'')+'</div>';
  }
  if(sh.type==='attach'){b='<div class="stack"><span class="eyebrow">'+(isC()?'Poslat trenérovi':'Poslat klientovi')+'</span><div class="glass list" style="padding:0"><label class="attach-opt" for="chat-file"><span class="ico" style="background:var(--accent)">'+ic('image',20)+'</span><span class="grow">Fotka nebo video<div class="tiny muted" style="font-weight:400">Z galerie telefonu</div></span>'+ic('chev',18)+'</label><input type="file" id="chat-file" accept="image/*,video/*" hidden data-file="chat:'+sh.id+'">'+(isC()?'':'<button class="attach-opt" data-a="sheet" data-v="chattpl:'+sh.id+'"><span class="ico" style="background:var(--i-3)">'+ic('dumbbell',20)+'</span><span class="grow">Tréninková šablona<div class="tiny muted" style="font-weight:400">Klient ji uvidí ve svém plánu</div></span>'+ic('chev',18)+'</button>')+'</div><button class="btn ghost block" data-a="close">Zrušit</button></div>';}
+ if(sh.type==='bulktpl'){const cs=UI.csel.map(client).filter(Boolean);b='<div class="stack"><div><span class="eyebrow">Poslat šablonu</span><div class="title-l" style="margin-top:4px">'+cs.length+' '+pl(cs.length,'klientovi','klientům','klientům')+'</div><div class="avstack" style="margin-top:8px">'+cs.slice(0,8).map(c=>avatar(c,30)).join('')+'</div></div><div class="glass list">'+S.templates.filter(t=>!t.forClient).map(t=>'<button class="li plain" data-a="bulkpick" data-v="'+t.id+'"><div class="grow" style="min-width:0"><div class="ellip" style="font-weight:500">'+esc(t.name)+'</div><div class="tiny muted">'+t.ex.length+' '+pl(t.ex.length,'cvik','cviky','cviků')+' · '+setCount(t)+' sérií</div></div>'+catpill(t.cat)+'</button>').join('')+'</div><button class="btn ghost block" data-a="close">Zrušit</button></div>';}
+ if(sh.type==='bulkmsg'){const cs=UI.csel.map(client).filter(Boolean);b='<div class="stack"><div><span class="eyebrow">Hromadná zpráva</span><div class="title-l" style="margin-top:4px">'+cs.length+' '+pl(cs.length,'klientovi','klientům','klientům')+'</div><div class="tiny muted" style="margin-top:4px;line-height:1.4">'+esc(cs.map(c=>c.name.split(' ')[0]).join(', '))+'</div></div><div class="tiny faint" style="margin:-4px 2px 0">Každý dostane zprávu do svého chatu zvlášť, ostatní ji neuvidí.</div><textarea class="input" id="bulk-text" data-in="sheetNote" placeholder="Např. Tento týden máme volno ve čtvrtek, trénink přesuneme na pátek." style="min-height:110px">'+esc(sh.note||'')+'</textarea><button class="btn ink block" data-a="bulksend">'+ic('send',18)+' Odeslat</button><button class="btn ghost block" data-a="close">Zrušit</button></div>';}
  if(sh.type==='chattpl'){b='<div class="stack"><span class="eyebrow">Sdílet šablonu v chatu</span><div class="glass list">'+S.templates.map(t=>'<button class="li plain" data-a="chatsendtpl" data-v="'+sh.id+':'+t.id+'"><div class="grow"><div class="ellip" style="font-weight:500">'+esc(t.name)+'</div><div class="tiny muted">'+t.ex.length+' cviků · '+setCount(t)+' sérií</div></div>'+catpill(t.cat)+'</button>').join('')+'</div><button class="btn ghost block" data-a="close">Zrušit</button></div>';}
  if(sh.type==='expick'){const sw=sh.mode==='swap',cur=sw&&S.active.ex[sh.i],cx=cur&&libByName(cur.orig?cur.orig.name:cur.name);
   b='<div class="stack"><div><span class="eyebrow">'+(sw?'Vyměnit cvik':'Knihovna cviků')+'</span><div class="title-l" style="margin-top:4px">'+(sw?esc(cur.name):'Vyber cviky do šablony')+'</div>'+(sw?'<div class="tiny muted" style="margin-top:2px">Série, opakování i pauza z plánu zůstanou stejné.</div>':'')+'</div>';
   if(sw&&cx&&!UI.exq&&!UI.exm&&!UI.exe){const alt=libAll().filter(x=>x.name!==cur.name&&(x.mu===cx.mu));if(alt.length)b+='<div class="sec" style="margin-top:0"><h3>Podobné cviky · '+esc(cx.mu)+'</h3></div><div class="glass list">'+alt.slice(0,6).map(x=>libRow(x,'expicked',ic('swap',16))).join('')+'</div><div class="sec"><h3>Všechny cviky</h3></div>';}
   const list=libFiltered().filter(x=>!sw||x.name!==cur.name);
   const pk=UI.pick||[];
-  b+=libFilters()+libMuNote()+(list.length?libGrouped(list,x=>sw?libRow(x,'expicked',ic('swap',16,2)):libRow(x,'extoggle',(pk.includes(x.id)?'<span class="tiny num" style="color:var(--accent);font-weight:700">'+(pk.indexOf(x.id)+1)+'.</span>':'')+'<span class="pkbox'+(pk.includes(x.id)?' on':'')+'">'+(pk.includes(x.id)?ic('check',15,3):'')+'</span>')):'<div class="glass card empty">Nic takového v knihovně není.</div>')+(sw?'':'<button class="btn ghost block" data-a="exnew" data-v="editor">'+ic('plus',16,2.2)+' Vytvořit nový cvik</button>')+(sw?'<button class="btn ghost block" data-a="close">Zavřít</button>':'<div style="position:sticky;bottom:-26px;padding:10px 0 2px;margin-bottom:-6px;background:linear-gradient(transparent,var(--glass-strong) 30%)"><button class="btn ink block" data-a="expickdone"'+(pk.length?'':' disabled style="opacity:.5"')+'>'+(pk.length?'Přidat '+pk.length+' '+pl(pk.length,'cvik','cviky','cviků'):'Vyber cviky')+'</button></div>')+'</div>';}
+  b+=libFilters()+libMuNote()+(list.length?libGrouped(list,x=>sw?libRow(x,'expicked',ic('swap',16,2)):libRow(x,'extoggle',favStar(x.name)+(pk.includes(x.id)?'<span class="tiny num" style="color:var(--accent);font-weight:700">'+(pk.indexOf(x.id)+1)+'.</span>':'')+'<span class="pkbox'+(pk.includes(x.id)?' on':'')+'">'+(pk.includes(x.id)?ic('check',15,3):'')+'</span>')):'<div class="glass card empty">Nic takového v knihovně není.</div>')+(sw?'':'<button class="btn ghost block" data-a="exnew" data-v="editor">'+ic('plus',16,2.2)+' Vytvořit nový cvik</button>')+(sw?'<button class="btn ghost block" data-a="close">Zavřít</button>':'<div style="position:sticky;bottom:-26px;padding:10px 0 2px;margin-bottom:-6px;background:linear-gradient(transparent,var(--glass-strong) 30%)"><button class="btn ink block" data-a="expickdone"'+(pk.length?'':' disabled style="opacity:.5"')+'>'+(pk.length?'Přidat '+pk.length+' '+pl(pk.length,'cvik','cviky','cviků'):'Vyber cviky')+'</button></div>')+'</div>';}
  if(sh.type==='exhist'){b=exHistHTML(sh.cid,sh.name);}
  if(sh.type==='exinfo'){const x=libById(sh.id);b=x?exInfoHTML(x):'';}
  if(sh.type==='finish'){const w=S.active;const done=w.ex.reduce((a,e)=>a+e.sets.filter(x=>x.done).length,0);const vol=w.ex.reduce((a,e)=>a+(e.timed?0:e.sets.filter(x=>x.done).reduce((b,x)=>b+toKg(x.kg)*(parseInt(x.reps)||parseInt(x.plan)||0),0)),0);
@@ -1739,7 +1771,9 @@ function render0(anim){
    h=k==='client'?scrClient(id):k==='session'?scrSession(id):k==='template'?scrTemplate(id):k==='chat'?scrChat(id):k==='editor'?scrEditor():k==='review'?scrReview():k==='settings'?scrSettings():k==='library'?scrLibrary():k==='exform'?scrExForm():k==='attendance'?scrAttendance():k==='allclients'&&S.role==='owner'?scrAllClients():k==='report'?scrReport():k==='reports'&&S.role==='owner'?scrReports():k==='trainer'&&S.role==='owner'?scrTrainer(id):scrMissing();}
   else h=UI.tab==='home'?scrHome():UI.tab==='clients'?scrClients():UI.tab==='templates'?scrTemplates():UI.tab==='chat'?scrChats():UI.tab==='trainers'&&S.role==='owner'?scrTrainers():scrProfile();
   const isChat=top&&top.startsWith('chat:'),isEditor=top==='editor';
-  if(!top||!(isChat||isEditor||top.startsWith('session:'))){
+  if(!top&&UI.tab==='clients'&&UI.csel){const n=UI.csel.length;
+   h+='<div class="bulkbar glass strong"><button class="btn ink" data-a="bulktpl"'+(n?'':' disabled')+'>'+ic('send',18)+' Poslat šablonu</button><button class="btn ghost" data-a="bulkmsg"'+(n?'':' disabled')+'>'+ic('chat',18)+' Napsat zprávu</button></div>';}
+  else if(!top||!(isChat||isEditor||top.startsWith('session:'))){
    const u=unreadAll();
    h+='<nav class="tabbar glass strong'+(S.role==='owner'?' six':'')+'" aria-label="Hlavní navigace">'+[['home','Přehled','home'],['clients','Klienti','users'],['templates','Tréninky','dumbbell'],['chat','Zprávy','chat']].concat(S.role==='owner'?[['trainers','Trenéři','crown']]:[]).concat([['profile','Profil','person']]).map(x=>'<button class="tab'+(!top&&UI.tab===x[0]?' on':'')+'" data-a="tab" data-v="'+x[0]+'" aria-label="'+x[1]+'">'+ic(x[2],23,!top&&UI.tab===x[0]?2:1.7)+'<span>'+x[1]+'</span>'+(x[0]==='chat'&&u?'<span class="badge">'+u+'</span>':'')+'</button>').join('')+'</nav>';
   }
@@ -1808,7 +1842,7 @@ function newDraft(t){return t?JSON.parse(JSON.stringify(Object.assign({isNew:fal
 
 const CLIENT_REPLIES=['Díky, rozumím! 👍','Jasně, zkusím to tak.','Super, těším se na další trénink.','Ok, dám vědět, jak to šlo.','Díky za radu!'];
 const A={
- tab(v){{const ts=[...app.querySelectorAll('.tabbar .tab')].map(x=>x.getAttribute('data-v'));const i0=ts.indexOf(UI.tab),i1=ts.indexOf(v);UI.tabDir=(i0<0||i1<0||UI.stack.length)?0:Math.sign(i1-i0);}if(UI.tab===v&&!UI.stack.length){const vw=document.getElementById('view');if(vw)vw.scrollTo({top:0,behavior:'smooth'});return;}UI.stack=[];UI.tab=v;if(v==='plan'&&UI.cplanSeg!=='history')UI.cplanSeg='plan';UI.sheet=null;render('tab');const vw=document.getElementById('view');if(vw)vw.scrollTop=0;},
+ tab(v){{const ts=[...app.querySelectorAll('.tabbar .tab')].map(x=>x.getAttribute('data-v'));const i0=ts.indexOf(UI.tab),i1=ts.indexOf(v);UI.tabDir=(i0<0||i1<0||UI.stack.length)?0:Math.sign(i1-i0);}if(UI.tab===v&&!UI.stack.length){const vw=document.getElementById('view');if(vw)vw.scrollTo({top:0,behavior:'smooth'});return;}UI.stack=[];UI.csel=null;UI.tab=v;if(v==='plan'&&UI.cplanSeg!=='history')UI.cplanSeg='plan';UI.sheet=null;render('tab');const vw=document.getElementById('view');if(vw)vw.scrollTop=0;},
  back(){pop();},
  auth(v){UI.authStep=v;render('push');},
  demo(){S.role='trainer';S.me='tr1';S.authed=true;save();render('push');},
@@ -1869,7 +1903,7 @@ const A={
   const pairs=sh.type==='share'?sh.sel.map(c=>[sh.id,c]):sh.sel.map(t=>[t,sh.id]);
   pairs.forEach(p=>{S.assign.push({id:uid(),templateId:p[0],clientId:p[1],date:new Date().toISOString(),note:sh.note||'',done:false});
    const t=tpl(p[0]);(S.messages[p[1]]=S.messages[p[1]]||[]).push({id:uid(),cread:false,by:'trainer',text:'Sdílel jsem ti trénink „'+t.name+'“.'+(sh.note?' '+sh.note:''),at:new Date().toISOString(),read:true});});
-  save();UI.sheet=null;toast(sh.type==='share'?'Sdíleno s '+pairs.length+' '+pl(pairs.length,'klientem','klienty','klienty'):'Šablona přiřazena');},
+  save();UI.sheet=null;if(sh.bulk)UI.csel=null;toast(sh.type==='share'?'Sdíleno s '+pairs.length+' '+pl(pairs.length,'klientem','klienty','klienty'):'Šablona přiřazena');},
  simjoin(){const names=['Adéla Marková','Filip Kučera','Simona Pokorná','Daniel Fiala','Nikola Růžičková'];const used=S.clientsAll.map(c=>c.name);const n=names.find(x=>!used.includes(x))||('Nový klient '+(S.clients.length+1));
   const c=addClient(n);UI.sheet=null;UI.tab='clients';UI.stack=[];UI.clientFilter='all';render('pop');notify('client','Nový klient',n+' se připojil(a) přes tvůj kód','client:'+c.id,true);},
  addnote(cid){const v=(UI.noteDraft||'').trim();if(!v)return toast('Napiš text poznámky');(S.notes[cid]=S.notes[cid]||[]).push({id:uid(),text:v,at:new Date().toISOString()});UI.noteDraft='';save();toast('Poznámka uložena');},
@@ -1887,6 +1921,19 @@ const A={
  newtpl(){UI.draft=newDraft(null);UI.sheet=null;push('editor');},
  tplcomment(id){const v=(UI.commentDraft||'').trim();if(!v)return toast('Napiš komentář');const t=tpl(id);if(!t)return;(t.comments=t.comments||[]).push(isC()?{id:uid(),by:'client',text:v,at:new Date().toISOString(),read:false}:{id:uid(),by:'trainer',text:v,at:new Date().toISOString(),cread:false});UI.commentDraft='';save();rerender();toast(isC()?'Odesláno trenérovi':'Komentář odeslán klientovi');},
  edittpl(id){UI.draft=newDraft(tpl(id));push('editor');},
+ exfav(n){S.exFav=S.exFav||{};const k=isC()?'c':'t',a=S.exFav[k]=S.exFav[k]||[],i=a.indexOf(n);if(i>=0)a.splice(i,1);else a.unshift(n);save();toast(i>=0?'Odebráno z oblíbených':'Přidáno do oblíbených');},
+ tpldup(id){const t=tpl(id);if(!t)return;const n=JSON.parse(JSON.stringify(t)),now=new Date().toISOString();n.id='t'+uid();n.name=t.name+' (kopie)';delete n.comments;delete n.trSeen;n.tr=S.me;n.at=now;n.upd=now;
+  S.templatesAll.splice(S.templatesAll.indexOf(t)+1,0,n);save();toast('Šablona zkopírována');A.edittpl(n.id);},
+ csel(v){UI.csel=v?[v]:[];rerender();},
+ cselx(){UI.csel=null;rerender();},
+ cselt(id){const a=UI.csel||(UI.csel=[]),i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id);rerender();},
+ cselall(){const ids=S.clients.filter(c=>c.status==='active').map(c=>c.id);UI.csel=UI.csel&&UI.csel.length===ids.length?[]:ids;rerender();},
+ bulktpl(){if(!(UI.csel||[]).length)return toast('Vyber aspoň jednoho klienta');UI.sheet={type:'bulktpl'};rerender();},
+ bulkpick(tid){UI.sheet={type:'share',id:tid,sel:UI.csel.slice(),note:'',bulk:true};rerender();},
+ bulkmsg(){if(!(UI.csel||[]).length)return toast('Vyber aspoň jednoho klienta');UI.sheet={type:'bulkmsg',note:''};rerender();},
+ bulksend(){const sh=UI.sheet,tx=(sh.note||'').trim();if(!tx)return toast('Napiš text zprávy');const ids=UI.csel.slice(),now=new Date().toISOString();
+  ids.forEach(id=>(S.messages[id]=S.messages[id]||[]).push({id:uid(),by:'trainer',kind:'text',text:tx,at:now,read:true,cread:false}));
+  UI.sheet=null;UI.csel=null;save();toast('Zpráva odeslána '+ids.length+' '+pl(ids.length,'klientovi','klientům','klientům'));},
  dcat(v){UI.draft.cat=v;rerender();},
  exadd(v){if(v){addDraftEx(v);rerender();return;}const lx=v&&libByName(v),tm=lx&&lx.m==='time';UI.draft.ex.push({id:uid(),name:v,sets:[{reps:'',int:''}],rest:tm?30:180,note:lx&&lx.note||'',note:'',media:[]});rerender();const vw=document.getElementById('view');if(vw)vw.scrollTop=vw.scrollHeight-900;if(!v){const el=document.getElementById('e-n-'+UI.draft.ex[UI.draft.ex.length-1].id);if(el)el.focus();}},
  setadd(id){const e=UI.draft.ex.find(x=>x.id===id);const l=e.sets[e.sets.length-1]||{reps:'10',int:''};e.sets.push({reps:l.reps,int:l.int});rerender();},
@@ -2046,23 +2093,39 @@ app.addEventListener('click',e=>{
 /* long press on a client row: quick menu (message, send workout, progress, profile) */
 let CM=null,cmSkip=0;
 function cmClose(){const o=document.getElementById('cmenu');if(!o)return;o.classList.add('out');setTimeout(()=>o.remove(),160);}
-function cmOpen(row){const id=row.getAttribute('data-v').split(':')[1],c=client(id);if(!c)return;try{if(navigator.vibrate)navigator.vibrate(12);}catch(_){}
- cmClose();const r=row.getBoundingClientRect(),vh=window.innerHeight,mh=4*50+8,below=r.bottom+12+mh<vh-20,top=below?r.bottom+12:Math.max(20,r.top-12-mh);
+function cmOk(row){const [k,id]=row.getAttribute('data-v').split(':');if(k==='client')return !!client(id);return !row.closest('.bub')&&S.templates.some(t=>t.id===id);}
+function cmOpen(row){const [kind,id]=row.getAttribute('data-v').split(':'),isT=kind==='template';if(!cmOk(row))return;try{if(navigator.vibrate)navigator.vibrate(12);}catch(_){}
+ const items=isT?[['copy','Duplikovat','dup'],['send','Poslat klientům','share'],['edit','Upravit','edit'],['trash','Smazat','del']]
+  :[['chat','Napsat zprávu','chat'],['send','Poslat trénink','assign'],['trend','Pokrok','prog'],['person','Otevřít profil','profile']].concat(!UI.stack.length&&UI.tab==='clients'?[['check','Vybrat více','sel']]:[]);
+ cmClose();const r=row.getBoundingClientRect(),vh=window.innerHeight,mh=items.length*50+8,below=r.bottom+12+mh<vh-20,top=below?r.bottom+12:Math.max(20,r.top-12-mh);
  const o=document.createElement('div');o.id='cmenu';
- const items=[['chat','Napsat zprávu','chat'],['send','Poslat trénink','assign'],['trend','Pokrok','prog'],['person','Otevřít profil','profile']];
  o.innerHTML='<div class="cm-bg"></div><div class="cm-row glass strong" style="left:'+(r.left-4)+'px;top:'+(r.top-4)+'px;width:'+(r.width+8)+'px">'+row.outerHTML+'</div>'
-  +'<div class="cm-menu glass strong" style="left:'+Math.min(r.left+36,window.innerWidth-260)+'px;top:'+top+'px">'+items.map(x=>'<button data-cm="'+x[2]+'">'+esc(x[1])+'<span>'+ic(x[0],20)+'</span></button>').join('')+'</div>';
+  +'<div class="cm-menu glass strong" style="left:'+Math.min(r.left+36,window.innerWidth-260)+'px;top:'+top+'px">'+items.map(x=>'<button data-cm="'+x[2]+'"'+(x[2]==='del'?' class="danger"':'')+'>'+esc(x[1])+'<span>'+ic(x[0],20)+'</span></button>').join('')+'</div>';
  o.addEventListener('click',e=>{const b=e.target.closest('[data-cm]');e.preventDefault();e.stopPropagation();cmClose();if(!b)return;const k=b.getAttribute('data-cm');
+  if(isT){if(k==='dup')A.tpldup(id);else if(k==='share')A.sheet('share:'+id);else if(k==='edit')A.edittpl(id);else A.deltpl(id);return;}
+  if(k==='sel'){A.csel(id);return;}
   if(k==='chat')A.open('chat:'+id);else if(k==='assign')A.sheet('assign:'+id);else{A.open('client:'+id);if(k==='prog')setTimeout(()=>{const s=document.getElementById('cstats');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});},120);}});
  document.body.appendChild(o);}
-app.addEventListener('pointerdown',e=>{const row=e.target.closest('[data-a=open][data-v^="client:"]');if(!row||isC()||e.button>0)return;
+const CMSEL='[data-a=open][data-v^="client:"],[data-a=open][data-v^="template:"]';
+app.addEventListener('pointerdown',e=>{const row=e.target.closest(CMSEL);if(!row||isC()||e.button>0||!cmOk(row))return;
  CM={row:row,x:e.clientX,y:e.clientY,t:setTimeout(()=>{if(!CM)return;cmSkip=Date.now();row.classList.remove('cm-press');cmOpen(row);CM=null;},480)};row.classList.add('cm-press');});
 const cmCancel=()=>{if(!CM)return;clearTimeout(CM.t);CM.row.classList.remove('cm-press');CM=null;};
 app.addEventListener('pointermove',e=>{if(CM&&Math.hypot(e.clientX-CM.x,e.clientY-CM.y)>8)cmCancel();});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>app.addEventListener(t,cmCancel));
 app.addEventListener('scroll',cmCancel,true);
-app.addEventListener('click',e=>{if(Date.now()-cmSkip<700&&e.target.closest('[data-v^="client:"]')){e.preventDefault();e.stopImmediatePropagation();}},true);
-app.addEventListener('contextmenu',e=>{if(e.target.closest('[data-a=open][data-v^="client:"]'))e.preventDefault();});
+app.addEventListener('click',e=>{if(Date.now()-cmSkip<700&&e.target.closest('[data-v^="client:"],[data-v^="template:"]')){e.preventDefault();e.stopImmediatePropagation();}},true);
+app.addEventListener('contextmenu',e=>{if(e.target.closest(CMSEL)&&!isC())e.preventDefault();});
+/* swipe back: drag from the left edge of a detail screen to go back, like iOS */
+let SB=null;
+function sbEnd(){if(!SB)return;const s=SB;SB=null;if(!s.on)return;const w=window.innerWidth;
+ if(s.dx>w*.33){s.v.style.transition='transform .18s ease-out';s.v.style.transform='translateX('+w+'px)';setTimeout(()=>{const b=s.v.querySelector('#navbar [data-a=back]');s.v.removeAttribute('id');if(b)A.back();},170);}
+ else{s.v.style.transition='transform .22s ease-out';s.v.style.transform='';setTimeout(()=>{s.v.style.transition='';s.v.classList.remove('sbing');},230);}}
+app.addEventListener('touchstart',e=>{SB=null;if(e.touches.length!==1||UI.sheet||document.getElementById('cmenu'))return;const t=e.touches[0];if(t.clientX>24)return;
+ const v=document.getElementById('view');if(!v||!v.querySelector('#navbar [data-a=back]'))return;SB={x:t.clientX,y:t.clientY,v:v,on:false,dx:0};},{passive:true});
+app.addEventListener('touchmove',e=>{if(!SB)return;const t=e.touches[0],dx=t.clientX-SB.x,dy=t.clientY-SB.y;
+ if(!SB.on){if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){SB=null;return;}if(dx<=10)return;SB.on=true;SB.v.style.transition='none';SB.v.classList.add('sbing');}
+ SB.dx=Math.max(0,dx);SB.v.style.transform='translateX('+SB.dx+'px)';},{passive:true});
+app.addEventListener('touchend',sbEnd);app.addEventListener('touchcancel',()=>{if(SB)SB.dx=0;sbEnd();});
 /* swipe to start: drag the lime knob to the end of the track */
 ['woset','wopad','sugyes','plates','woaddset','wouni'].forEach(k=>{const f=A[k];A[k]=function(v){const e=S.active&&S.active.ex[parseInt(v)];return inU(e&&e.u,()=>f.apply(this,arguments));};});
 ['wopadq','wokey','wopadsave','platew','wopadr','wodelset'].forEach(k=>{const f=A[k];A[k]=function(){const e=S.active&&UI.sheet&&S.active.ex[UI.sheet.i];return inU(e&&e.u,()=>f.apply(this,arguments));};});
@@ -2178,8 +2241,12 @@ function woTick(){if(!S.authed||!isC()||!S.active)return;const w=S.active;
    const ae=document.activeElement,fid=ae&&ae.id,pos=ae&&ae.selectionStart;if(current()==='workout'||UI.lock){rerender();if(fid){const el=document.getElementById(fid);if(el){el.focus();try{el.setSelectionRange(pos,pos);}catch(_){}}}}toast('Pauza skončila, jdeme na další sérii');}}}
 setInterval(woTick,1000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)woTick();});
+function applyGo(){let go='';try{go=new URLSearchParams(location.search).get('go')||'';}catch(_){}if(!go||!S.authed)return;
+ try{history.replaceState(null,'',location.pathname);}catch(_){}UI.stack=[];UI.sheet=null;
+ if(isC()){if(go==='workout'){if(S.active)UI.stack=['workout'];else{UI.tab='plan';UI.sheet={type:'cpick',sel:[],note:''};}}else UI.tab=go==='chat'?'chat':go==='progress'?'progress':UI.tab;}
+ else UI.tab=go==='chat'?'chat':go==='progress'?'clients':'templates';}
 function refocus(){const ni=document.getElementById('chat-in');if(ni&&document.activeElement!==ni){/* keep keyboard */}}
 
-render();
+applyGo();render();
 })();
 </script>
