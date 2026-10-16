@@ -256,6 +256,9 @@ rep("function slotBook(id){const s=(S.slots||[]).find(x=>x.id===id);if(!s||s.cl|
  return sb.rpc(fn,{p_id:id}).then(({data,error})=>{const ok=!error&&data===true;const s=(S.slots||[]).find(x=>x.id===id);if(ok&&s){s.cl=cl;const row=ROWS.slots.get(id);if(row)row.client_id=cl;}if(!ok)return loadAll().then(()=>{snapshot();return false;});return true;}).catch(()=>false);}
 function slotBook(id){return slotRpc('book_slot',id,S.cme);}
 function slotCancel(id){return slotRpc('cancel_slot',id,null);}""")
+rep("function vsrc(x){return !x?'':x.startsWith('data:')?x:(BLOBS[x]||'');}","function vsrc(x){return msrc(x);}")
+rep("function voiceSend(cid,blob,dur,wave){const r=new FileReader();r.onload=()=>{(S.messages[cid]=S.messages[cid]||[]).push(msgOut({kind:'voice',src:r.result,dur:Math.round(dur),wave:wave,text:''}));save();render('bottom');\n  if(isC())trainerReply(cid,'Díky, poslechl jsem si to 👍');else clientReply(cid,'Jasně, díky!');};r.readAsDataURL(blob);}",r"""function voiceSend(cid,blob,dur,wave){const ext=/webm/.test(blob.type)?'webm':/ogg/.test(blob.type)?'ogg':'m4a';
+ upload(new File([blob],'hlas.'+ext,{type:blob.type||'audio/mp4'})).then(src=>{BLOBS[src]=URL.createObjectURL(blob);(S.messages[cid]=S.messages[cid]||[]).push(msgOut({kind:'voice',src:src,dur:Math.round(dur),wave:wave,text:''}));save();render('bottom');}).catch(e=>toast('Hlasovou zprávu se nepodařilo odeslat. '+(e.message||'')));}""")
 rep("function refreshData(){return new Promise(r=>setTimeout(r,700));}","function refreshData(){if(!navigator.onLine)return Promise.reject(new Error('offline'));return flushNow().then(()=>loadAll()).then(()=>{snapshot();});}")
 # ---------- start ----------
 rep("\napplyInvite();applyGo();render();\n})();\n</script>",r"""

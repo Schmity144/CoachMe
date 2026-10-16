@@ -569,6 +569,21 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 #printroot .pr-c{display:flex;gap:14px;align-items:flex-end;height:100px}#printroot .pr-c div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px}#printroot .pr-c i{display:block;width:100%;background:#9acd00;border-radius:4px}#printroot .pr-c em{color:#777;font-style:normal}
 #printroot table{width:100%;border-collapse:collapse}#printroot td{padding:6px 4px;border-bottom:1px solid #eee}#printroot td:last-child{text-align:right;font-weight:700}
 #printroot .pr-f{margin-top:28px;color:#888;font-size:11px}}
+.vrecbtn{background:var(--chip)!important;width:40px;height:40px;margin:2px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;flex:none}
+.vrecbtn.rec{background:var(--bad)!important;color:#fff;transform:scale(1.18);box-shadow:0 0 0 8px color-mix(in srgb,var(--bad) 22%,transparent)}
+.vrecbtn.rec.cancel{background:var(--ink3)!important;box-shadow:none}
+.vrecbar{position:absolute;left:6px;top:6px;bottom:6px;right:100px;display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:22px;background:var(--bg);z-index:2}
+.vrecbar .vt{font-weight:800;font-size:16px}
+.vrecbar.cancel .vhint{color:var(--bad)}
+.vdot{width:10px;height:10px;border-radius:9px;background:var(--bad);animation:vblink 1s infinite;flex:none}
+@keyframes vblink{50%{opacity:.25}}
+.bub.voice{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px!important;min-width:210px}
+.vplay{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(127,127,127,.22)}
+.bub.voice.them .vplay{background:var(--grad);color:var(--grad-ink)}
+.vwave{display:flex;align-items:center;gap:2px;height:26px;flex:1;min-width:0}
+.vwave i{display:block;flex:1;max-width:4px;min-width:2px;border-radius:2px;background:currentColor;opacity:.35}
+.vwave i.on{opacity:1}
+.vdur{flex:none;opacity:.8}
 </style>
 
 <div class="stage">
@@ -651,7 +666,7 @@ eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12"
  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
  reply:'<path d="M10 8 5 12.5l5 4.5"/><path d="M5 12.5h9a5 5 0 0 1 5 5V19"/>',
  wifioff:'<path d="M3 3l18 18"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 13a10 10 0 0 1 5-2.7"/><path d="M14.5 10.4A10 10 0 0 1 19 13"/><path d="M2 9.5a15 15 0 0 1 4.5-2.8"/><path d="M11 6a15 15 0 0 1 11 3.5"/><circle cx="12" cy="20" r=".8" fill="currentColor"/>',
- star:'<path d="M12 3.6l2.6 5.2 5.8.9-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.9z" stroke-linejoin="round"/>',pin:'<path d="M12 21s-6.5-5.8-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.2 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/>',food:'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v6.5M7 7h4M17 3c-1.7 1.5-2.5 3.6-2.5 6.5V13H17v8"/>',pdf:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13.5h6M9 17h4"/>'
+ star:'<path d="M12 3.6l2.6 5.2 5.8.9-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4.1 5.8-.9z" stroke-linejoin="round"/>',mic:'<rect x="9" y="3" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',pause:'<rect x="6.5" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.9" y="5" width="3.6" height="14" rx="1.2"/>',pin:'<path d="M12 21s-6.5-5.8-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.2 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.4"/>',food:'<path d="M7 3v8a2 2 0 0 0 2 2v8M11 3v6.5M7 7h4M17 3c-1.7 1.5-2.5 3.6-2.5 6.5V13H17v8"/>',pdf:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13.5h6M9 17h4"/>'
 };
 function ic(n,s,w){s=s||22;w=w||1.7;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[n]||'')+'</svg>';}
 
@@ -683,7 +698,7 @@ function fmtRest(sec){sec=parseInt(sec)||0;return Math.floor(sec/60)+':'+String(
 function parseRest(t){t=String(t||'').trim();if(!t)return 0;if(t.includes(':')){const p=t.split(':');return (parseInt(p[0])||0)*60+(parseInt(p[1])||0);}return parseInt(t)||0;}
 function repsTxt(r,int){r=String(r==null?'':r).trim();if(!r)return int==='Selhání'?'Do selhání':int==='Cluster'?'Cluster série':int&&int!=='Rozcvička'?'Do '+int:'Bez počtu';return /^\d+$/.test(r)?r+' opak.':r;}
 function setCount(t){return t.ex.reduce((a,e)=>a+e.sets.length,0);}
-function msgPreview(m){return m.kind==='report'?'Měsíční report · '+ymLabel(m.ym):m.kind==='photo'?'Fotka':m.kind==='video'?'Video':m.kind==='template'?'Trénink: '+((tpl(m.templateId)||{}).name||'šablona'):m.text;}
+function msgPreview(m){return m.kind==='voice'?'Hlasová zpráva '+fmtSec(m.dur):m.kind==='report'?'Měsíční report · '+ymLabel(m.ym):m.kind==='photo'?'Fotka':m.kind==='video'?'Video':m.kind==='template'?'Trénink: '+((tpl(m.templateId)||{}).name||'šablona'):m.text;}
 function fmtCode(c){return c.slice(0,3)+' '+c.slice(3);}
 
 /* ---------- seed data ---------- */
@@ -1221,11 +1236,54 @@ function quoteHTML(re,me){if(!re)return '';const mine=re.by===(isC()?'client':'t
 function bubble0(m){const me=m.by===(isC()?'client':'trainer');
  if(m.kind==='photo'||m.kind==='video'){const src=m.src&&(m.src.startsWith('data:')?m.src:BLOBS[m.src]);
   return '<div class="bub media '+(me?'me':'them glass')+'">'+(src?(m.kind==='video'?'<video src="'+src+'" controls playsinline></video>':'<img alt="Fotka" src="'+src+'">'):'<div class="thumb" style="width:200px;height:140px">'+ic(m.kind==='video'?'play':'image',28)+'<span class="tag">'+(m.kind==='video'?'Video':'Fotka')+'</span></div>')+(m.text?'<div style="padding:6px 10px 4px"><span translate="no">'+esc(m.text)+'</span></div>':'')+'</div>';}
+ if(m.kind==='voice')return voiceBub(m,me);
  if(m.kind==='report'&&m.cid){const r=monthStats(m.cid,m.ym),mn=MONTHS[+m.ym.split('-')[1]-1],wd=wDelta(r);
   return '<button class="bub repmsg '+(me?'me':'them glass')+'" style="text-align:left" data-a="open" data-v="mrep:'+m.cid+'|'+m.ym+'"><div class="tiny" style="opacity:.7;font-weight:700;letter-spacing:.12em;text-transform:uppercase">'+'Měsíční report · '+mn+'</div><div style="font-weight:900;font-size:20px;line-height:1.12;margin-top:4px">'+r.n+' '+pl(r.n,'trénink','tréninky','tréninků')+(r.prs.length?',<br>'+r.prs.length+' '+pl(r.prs.length,'nový rekord','nové rekordy','nových rekordů')+' 🔥':'')+'</div><div class="tiny" style="opacity:.75;margin-top:6px">Docházka '+r.att+' %'+(wd?' · váha '+wd+' '+U():'')+'</div><div class="tiny" style="margin-top:8px;font-weight:700">Zobrazit report ›</div></button>';}
  if(m.kind==='template'){const t=tpl(m.templateId);
   return '<button class="bub tplmsg '+(me?'me':'them glass')+'" style="text-align:left" data-a="open" data-v="template:'+(t?t.id:'')+'"><div class="row" style="gap:10px"><span class="iconbtn sm" style="background:'+(me?'rgba(127,127,127,.25)':'var(--chip)')+'">'+ic('dumbbell',18)+'</span><div class="grow"><div class="tiny" style="opacity:.7">Tréninková šablona</div><div style="font-weight:600">'+esc(t?t.name:'Smazaná šablona')+'</div>'+(t?'<div class="tiny" style="opacity:.7">'+t.ex.length+' cviků · '+setCount(t)+' sérií</div>':'')+'</div>'+ic('chev',16)+'</div></button>';}
  return '<div class="bub '+(me?'me':'them glass')+'" translate="no">'+quoteHTML(m.re,me)+'<span translate="no">'+esc(m.text)+'</span></div>';}
+/* ===== v44: hlasové zprávy ===== */
+let VR=null,VAUD=null,VPLAY=null;
+function fmtSec(x){x=Math.max(0,Math.round(x||0));return Math.floor(x/60)+':'+String(x%60).padStart(2,'0');}
+function vsrc(x){return !x?'':x.startsWith('data:')?x:(BLOBS[x]||'');}
+function findMsg(id){for(const k in S.messages){const m=(S.messages[k]||[]).find(x=>x.id===id);if(m)return m;}return null;}
+function voiceBub(m,me){const w=m.wave&&m.wave.length?m.wave:Array(28).fill(.3),pl=VPLAY===m.id;
+ return '<div class="bub voice '+(me?'me':'them glass')+'"><button class="vplay" data-a="vplay" data-v="'+m.id+'" aria-label="'+(pl?'Pozastavit':'Přehrát hlasovou zprávu')+'">'+ic(pl?'pause':'play',17,2.2)+'</button><div class="vwave" data-vw="'+m.id+'">'+w.map(x=>'<i style="height:'+Math.round(4+x*20)+'px"></i>').join('')+'</div><span class="vdur tiny num" data-vd="'+m.id+'">'+fmtSec(m.dur)+'</span></div>';}
+function vPaint(id,p,reset,t){const m=findMsg(id);
+ document.querySelectorAll('[data-vw="'+id+'"]').forEach(w=>{const n=Math.round(p*w.children.length);[...w.children].forEach((b,i)=>b.classList.toggle('on',!reset&&i<n));});
+ document.querySelectorAll('[data-a=vplay][data-v="'+id+'"]').forEach(b=>{b.innerHTML=ic(reset?'play':'pause',17,2.2);});
+ document.querySelectorAll('[data-vd="'+id+'"]').forEach(d=>{d.textContent=fmtSec(reset?(m&&m.dur):t);});}
+function vStop(){if(VAUD){try{VAUD.pause();}catch(_){}VAUD=null;}const o=VPLAY;VPLAY=null;if(o)vPaint(o,0,true);}
+function wv(lv,n){if(!lv.length)return Array(n).fill(.3);const out=[];for(let i=0;i<n;i++){const a=Math.floor(i*lv.length/n),b=Math.max(a+1,Math.floor((i+1)*lv.length/n));let mx=0;for(let j=a;j<b&&j<lv.length;j++)mx=Math.max(mx,lv[j]);out.push(mx);}const top=Math.max(.04,...out);return out.map(x=>Math.round(Math.max(.1,x/top)*100)/100);}
+function recBarHTML(){return '<div class="vrecbar"><span class="vdot"></span><span class="num vt">'+fmtSec(VR&&VR.t0?(Date.now()-VR.t0)/1000:0)+'</span><span class="grow tiny muted vhint ellip">‹ Posuň doleva pro zrušení</span></div>';}
+function voiceSend(cid,blob,dur,wave){const r=new FileReader();r.onload=()=>{(S.messages[cid]=S.messages[cid]||[]).push(msgOut({kind:'voice',src:r.result,dur:Math.round(dur),wave:wave,text:''}));save();render('bottom');
+  if(isC())trainerReply(cid,'Díky, poslechl jsem si to 👍');else clientReply(cid,'Jasně, díky!');};r.readAsDataURL(blob);}
+function recStart(r,st){
+ const mt=['audio/mp4;codecs=mp4a.40.2','audio/mp4','audio/webm;codecs=opus','audio/webm'].find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
+ let rec;try{rec=new MediaRecorder(st,mt?{mimeType:mt,audioBitsPerSecond:32000}:undefined);}catch(e){st.getTracks().forEach(t=>t.stop());VR=null;return toast('Nahrávání se nepodařilo spustit');}
+ Object.assign(r,{rec:rec,st:st,chunks:[],lv:[],t0:Date.now()});
+ rec.ondataavailable=ev=>{if(ev.data&&ev.data.size)r.chunks.push(ev.data);};rec.onstop=()=>recDone(r);
+ try{const AC=window.AudioContext||window.webkitAudioContext,ac=new AC(),an=ac.createAnalyser();an.fftSize=512;ac.createMediaStreamSource(st).connect(an);const buf=new Uint8Array(an.fftSize);r.ac=ac;
+  r.iv=setInterval(()=>{an.getByteTimeDomainData(buf);let q=0;for(let i=0;i<buf.length;i++){const d=(buf[i]-128)/128;q+=d*d;}r.lv.push(Math.min(1,Math.sqrt(q/buf.length)*4));},90);}catch(_){}
+ rec.start(250);vStop();
+ const cp=app.querySelector('.composer');if(cp&&!cp.querySelector('.vrecbar'))cp.querySelector('#chat-in').insertAdjacentHTML('afterend',recBarHTML());
+ app.querySelectorAll('.vrecbtn').forEach(b=>b.classList.add('rec'));if(navigator.vibrate)navigator.vibrate(12);
+ r.tick=setInterval(()=>{const t=app.querySelector('.vrecbar .vt');if(t)t.textContent=fmtSec((Date.now()-r.t0)/1000);},250);
+ r.max=setTimeout(()=>{if(VR===r)recStop(false);},180000);}
+function recStop(cancel){const r=VR;if(!r)return;VR=null;r.held=false;r.cancelled=cancel;clearInterval(r.tick);clearInterval(r.iv);clearTimeout(r.max);
+ app.querySelectorAll('.vrecbar').forEach(e=>e.remove());app.querySelectorAll('.vrecbtn').forEach(b=>b.classList.remove('rec','cancel'));
+ if(r.rec&&r.rec.state!=='inactive'){try{r.rec.stop();}catch(_){recDone(r);}}}
+function recDone(r){if(r.done)return;r.done=true;try{r.st.getTracks().forEach(t=>t.stop());}catch(_){}try{r.ac&&r.ac.close();}catch(_){}
+ const dur=(Date.now()-r.t0)/1000;if(r.cancelled)return toast('Hlasová zpráva zrušena');if(dur<0.8||!r.chunks.length)return toast('Podrž mikrofon a mluv');
+ voiceSend(r.cid,new Blob(r.chunks,{type:(r.rec&&r.rec.mimeType)||'audio/mp4'}),dur,wv(r.lv,28));}
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('.vrecbtn');if(!b||VR)return;e.preventDefault();
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder)return toast('Tento prohlížeč neumí nahrávat zvuk');
+ const r={cid:b.getAttribute('data-v'),x:e.clientX,held:true};VR=r;try{b.setPointerCapture(e.pointerId);}catch(_){}
+ navigator.mediaDevices.getUserMedia({audio:true}).then(st=>{if(VR!==r||!r.held){st.getTracks().forEach(t=>t.stop());if(VR===r)VR=null;toast('Mikrofon je povolený. Podrž tlačítko a mluv.');return;}recStart(r,st);})
+  .catch(()=>{if(VR===r)VR=null;toast('Bez mikrofonu to nejde. Povol ho v nastavení prohlížeče.');});});
+window.addEventListener('pointermove',e=>{if(!VR||!VR.rec)return;const c=e.clientX-VR.x<-80;if(c!==!!VR.cancel){VR.cancel=c;app.querySelectorAll('.vrecbar,.vrecbtn').forEach(x=>x.classList.toggle('cancel',c));}});
+window.addEventListener('pointerup',()=>{if(!VR)return;if(!VR.rec){VR.held=false;return;}recStop(!!VR.cancel);});
+window.addEventListener('pointercancel',()=>{if(!VR)return;if(!VR.rec){VR.held=false;return;}recStop(true);});
 function scrChat(cid){
  const c=client(cid);if(!c)return scrMissing();
  const cm=isC();(S.messages[cid]=S.messages[cid]||[]).forEach(m=>{if(cm){if(m.by==='trainer')m.cread=true;}else if(m.by==='client')m.read=true;});save();
@@ -1235,7 +1293,7 @@ function scrChat(cid){
  if(UI.typing[cid])h+='<div class="bub them glass" style="padding:0"><span class="typing"><i></i><i></i><i></i></span></div>';
  if(!ms.length)h+='<div class="empty">Napiš první zprávu.</div>';
  const rp=UI.reply&&UI.reply.cid===cid&&ms.find(m=>m.id===UI.reply.id);
- h+='</div></div>'+(rp?'<div class="replybar glass strong"><span class="rpl"></span><div class="grow" style="min-width:0"><div class="tiny" style="color:var(--acc-text);font-weight:700">Odpovídáš '+(rp.by===(cm?'client':'trainer')?'na svou zprávu':cm?'trenérovi':'klientovi')+'</div><div class="tiny muted ellip" translate="no">'+esc(msgSnip(rp))+'</div></div><button class="iconbtn sm" style="width:30px;height:30px;background:var(--chip);flex:none" data-a="replyx" aria-label="Zrušit odpověď">'+ic('x',15,2.4)+'</button></div>':'')+'<form class="composer glass strong" data-form="chat" data-v="'+cid+'" style="padding-left:6px"><button type="button" class="iconbtn sm" data-a="sheet" data-v="attach:'+cid+'" aria-label="Přiložit fotku, video nebo trénink" style="width:40px;height:40px;margin:2px;background:var(--chip)">'+ic('plus',20,2.2)+'</button><input id="chat-in" placeholder="Zpráva" autocomplete="off" aria-label="Zpráva"><button class="iconbtn sm" type="submit" style="background:var(--ink);color:var(--on-ink);width:40px;height:40px;margin:2px" aria-label="Odeslat">'+ic('send',20,2.2)+'</button></form>';
+ h+='</div></div>'+(rp?'<div class="replybar glass strong"><span class="rpl"></span><div class="grow" style="min-width:0"><div class="tiny" style="color:var(--acc-text);font-weight:700">Odpovídáš '+(rp.by===(cm?'client':'trainer')?'na svou zprávu':cm?'trenérovi':'klientovi')+'</div><div class="tiny muted ellip" translate="no">'+esc(msgSnip(rp))+'</div></div><button class="iconbtn sm" style="width:30px;height:30px;background:var(--chip);flex:none" data-a="replyx" aria-label="Zrušit odpověď">'+ic('x',15,2.4)+'</button></div>':'')+'<form class="composer glass strong" data-form="chat" data-v="'+cid+'" style="padding-left:6px"><button type="button" class="iconbtn sm" data-a="sheet" data-v="attach:'+cid+'" aria-label="Přiložit fotku, video nebo trénink" style="width:40px;height:40px;margin:2px;background:var(--chip)">'+ic('plus',20,2.2)+'</button><input id="chat-in" placeholder="Zpráva" autocomplete="off" aria-label="Zpráva">'+(VR&&VR.rec&&VR.cid===cid?recBarHTML():'')+'<button type="button" class="iconbtn sm vrecbtn'+(VR&&VR.rec?' rec':'')+'" data-v="'+cid+'" aria-label="Podrž a nahraj hlasovou zprávu">'+ic('mic',20,2)+'</button><button class="iconbtn sm" type="submit" style="background:var(--ink);color:var(--on-ink);width:40px;height:40px;margin:2px" aria-label="Odeslat">'+ic('send',20,2.2)+'</button></form>';
  return h;
 }
 
@@ -1382,7 +1440,7 @@ function removeClient(id){const c=client(id);if(!c)return;detachClient(id);save(
 function removeTrainer(id){const t=S.trainers.find(x=>x.id===id);if(!t)return;const cs=S.clientsAll.filter(c=>c.trainerId===id).map(c=>c.id);cs.forEach(detachClient);
  S.trainers=S.trainers.filter(x=>x.id!==id);S.templatesAll=S.templatesAll.filter(x=>x.tr!==id||x.cl);S.exCustom=(S.exCustom||[]).filter(x=>x.tr!==id||x.cl);save();leaveScreens([id].concat(cs));render('pop');toast('Trenér '+t.name+' byl odebrán');}
 function cUnread(){return (S.messages[S.cme]||[]).filter(m=>m.by==='trainer'&&m.cread===false).length;}
-function msgSnip(m){return m.kind==='report'?'📊 Měsíční report · '+ymLabel(m.ym):m.kind==='photo'?'📷 Fotka':m.kind==='video'?'🎬 Video':m.kind==='template'?'🏋️ '+((tpl(m.templateId)||{}).name||'Šablona'):String(m.text||'').slice(0,120);}
+function msgSnip(m){return m.kind==='voice'?'🎤 Hlasová zpráva '+fmtSec(m.dur):m.kind==='report'?'📊 Měsíční report · '+ymLabel(m.ym):m.kind==='photo'?'📷 Fotka':m.kind==='video'?'🎬 Video':m.kind==='template'?'🏋️ '+((tpl(m.templateId)||{}).name||'Šablona'):String(m.text||'').slice(0,120);}
 function msgOut(o){const c=isC();return Object.assign({id:uid(),by:c?'client':'trainer',at:new Date().toISOString(),read:!c,cread:c?true:false},o);}
 function t_tr(){return S.trainer;}
 function myOwnTpl(){return S.templatesAll.filter(t=>t.cl&&t.cl===S.cme).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));}
@@ -2358,6 +2416,10 @@ const A={
  repdone(v){const r=S.reports.find(x=>x.id===v);if(!r)return;r.st=r.st==='done'?'new':'done';save();rerender();if(r.st==='done')toast('Označeno jako vyřešené');},
  sendreport(){const r=UI.report;if(r.text.trim().length<5){toast('Napiš prosím krátký popis');const el=document.getElementById('rep-text');if(el)el.focus();return;}
   S.reports.push({id:uid(),kind:r.kind,from:isC()?'client':'trainer',area:r.area,text:r.text.trim(),at:new Date().toISOString(),st:'new'});save();UI.report={kind:'bug',area:'',text:''};pop();toast('Děkujeme, odesláno anonymně');},
+ vplay(id){if(VPLAY===id)return vStop();vStop();const m=findMsg(id);if(!m)return;const src=vsrc(m.src);if(!src)return toast('Zpráva se ještě načítá, zkus to za chvíli');
+  const a=new Audio(src);VAUD=a;VPLAY=id;vPaint(id,0,false,0);
+  a.ontimeupdate=()=>{if(VPLAY!==id)return;const d=isFinite(a.duration)&&a.duration>0?a.duration:(m.dur||1);vPaint(id,Math.min(1,a.currentTime/d),false,a.currentTime);};
+  a.onended=()=>{if(VPLAY===id)vStop();};a.play().catch(()=>{vStop();toast('Zprávu se nepodařilo přehrát');});},
  slotwk(v){UI.slw=Math.max(isC()?0:-8,Math.min(8,(UI.slw||0)+(+v)));UI.sld=isC()?null:UI.sld;UI.bsel=null;rerender();},
  slotday(v){UI.sld=+v;UI.bsel=null;rerender();},
  slotaddopen(){UI.sheet={type:'slotadd',days:[UI.sld==null?dowIdx(new Date()):UI.sld],hrs:[],dur:60,rep:true,place:S.trainer.place||''};rerender();},

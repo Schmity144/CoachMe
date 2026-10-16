@@ -1383,5 +1383,15 @@
 "Automatické reporty vypnuté": "Automatic reports turned off",
 "Zobrazit report ›": "View report ›",
 "Předchozí týden": "Previous week",
-"Další týden": "Next week"
+"Další týden": "Next week",
+"‹ Posuň doleva pro zrušení": "‹ Slide left to cancel",
+"Hlasová zpráva zrušena": "Voice message cancelled",
+"Podrž mikrofon a mluv": "Hold the mic and speak",
+"Mikrofon je povolený. Podrž tlačítko a mluv.": "Microphone allowed. Hold the button and speak.",
+"Bez mikrofonu to nejde. Povol ho v nastavení prohlížeče.": "Microphone access is needed. Allow it in browser settings.",
+"Tento prohlížeč neumí nahrávat zvuk": "This browser can't record audio",
+"Zpráva se ještě načítá, zkus to za chvíli": "The message is still loading, try again shortly",
+"Zprávu se nepodařilo přehrát": "Couldn't play the message",
+"Nahrávání se nepodařilo spustit": "Couldn't start recording",
+"Hlasovou zprávu se nepodařilo odeslat": "Couldn't send the voice message"
 }
