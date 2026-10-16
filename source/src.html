@@ -485,6 +485,7 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 .stprev img{max-width:100%;height:auto;width:min(100%,var(--w,340px))}
 .prprev{display:flex;justify-content:center}.prprev img{height:min(52vh,460px);width:auto;aspect-ratio:9/16;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .prgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.prgrid button{padding:0;border-radius:12px;overflow:hidden;line-height:0;box-shadow:inset 0 0 0 1px var(--line,rgba(127,127,127,.25));transition:transform .15s}.prgrid button img{width:100%;aspect-ratio:9/16;display:block}.prgrid button.on{box-shadow:0 0 0 2.5px var(--accent);transform:scale(.97)}.prrow{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:2px 2px -2px}
+.wosince{display:flex;align-items:center;gap:8px;margin:-2px 0 0 38px;padding:2px 0;font-size:13px;color:var(--accent)}.wosince span{font-weight:600;color:var(--ink);opacity:.6}.wosince b{font-weight:800;font-variant-numeric:tabular-nums}
 .stopt .strd{width:20px;height:20px;border-radius:50%;border:2px solid var(--ink3);flex:none}.stopt.on .strd{border:6px solid var(--grad,var(--accent))}.stopt.on{box-shadow:inset 0 0 0 1.5px var(--grad,var(--accent))}
 </style>
 
@@ -1509,9 +1510,10 @@ function scrWorkout(){
   if(e.sug&&!e.sugDone)h+='<div class="sugbox stack" style="gap:6px"><div class="row" style="gap:8px;color:var(--good);font-weight:700">'+ic('trend',18)+'Návrh: zkus '+W(e.sug.kg)+'</div><div class="tiny muted" style="line-height:1.4">Minule jsi zvládl(a) všechny série s '+W(e.sug.from)+'. Trenér nastavil přidávat +'+String(e.sug.step).replace('.',',')+' kg.</div><div class="row" style="gap:8px"><button class="btn ink sm" data-a="sugyes" data-v="'+i+'">Použít</button><button class="btn ghost sm" data-a="sugno" data-v="'+i+'">Nechat '+W(e.sug.from)+'</button></div></div>';
   if(e.note)h+='<div class="small muted" style="line-height:1.4"><span translate="no">'+esc(e.note)+'</span></div>';
   if(e.media&&e.media.length)h+='<div class="media">'+e.media.map(m=>mediaThumb(m)).join('')+'</div>';
-  h+='<div class="stack" style="gap:8px;margin-top:2px">'+e.sets.map((x,k)=>{const cls=x.done?' done':k===cur?' cur':'';const ghost=!x.done&&k!==cur;
+  const lsI=w.lastSet?+w.lastSet.split(':')[0]:-1;
+  h+='<div class="stack" style="gap:8px;margin-top:2px">'+(lsI!==i?sinceHTML():'')+e.sets.map((x,k)=>{const cls=x.done?' done':k===cur?' cur':'';const ghost=!x.done&&k!==cur;
    const rir=x.int==='Rozcvička'?ipill('Rozcvička'):(x.int==='Cluster'?ipill('Cluster'):'')+(x.rir&&x.rir!=='Cluster'?ipill(x.rir):'');
-   return '<div class="wos'+cls+'"><span class="setno" style="width:28px;height:28px;font-size:13px;flex:none">'+(k+1)+'</span><button class="val'+(ghost?' ghost':'')+'" data-a="wopad" data-v="'+i+':'+k+'" aria-label="Zapsat sérii '+(k+1)+'">'+woVal(e,x)+'<span class="grow"></span>'+(x.up?'<span class="upflame">🔥</span>':'')+rir+'</button><button class="chk'+(x.done?' on':'')+'" data-a="woset" data-v="'+i+':'+k+'" aria-label="Série '+(k+1)+' hotová">'+ic('check',20,2.6)+'</button></div>';}).join('')+'</div>';
+   return '<div class="wos'+cls+'"><span class="setno" style="width:28px;height:28px;font-size:13px;flex:none">'+(k+1)+'</span><button class="val'+(ghost?' ghost':'')+'" data-a="wopad" data-v="'+i+':'+k+'" aria-label="Zapsat sérii '+(k+1)+'">'+woVal(e,x)+'<span class="grow"></span>'+(x.up?'<span class="upflame">🔥</span>':'')+rir+'</button><button class="chk'+(x.done?' on':'')+'" data-a="woset" data-v="'+i+':'+k+'" aria-label="Série '+(k+1)+' hotová">'+ic('check',20,2.6)+'</button></div>'+(w.lastSet===i+':'+k?sinceHTML():'');}).join('')+'</div>';
   h+='<button class="small" style="color:var(--accent);font-weight:600;align-self:flex-start;padding:4px 2px" data-a="woaddset" data-v="'+i+'">'+ic('plus',15,2.4)+' Přidat sérii</button>';
   h+='<div class="woqc" style="margin-top:0">'+(e.timed?'':'<button data-a="plates" data-v="'+i+'">🏋️ Kotouče a rozcvička</button>')+'<button data-a="pain" data-v="'+i+'"'+(e.pain?' style="box-shadow:inset 0 0 0 1.5px var(--warn);color:var(--warn)"':'')+'>⚠️ '+(e.pain?'Bolest zapsaná':'Bolest')+'</button></div>'+(e.pain?'<div class="painbox">'+esc(e.pain)+'</div>':'');
   h+='</div>';}));
@@ -1908,7 +1910,7 @@ const A={
    return inU(u,()=>({u:u,name:e.name,uni:!!e.uni,rest:e.rest==null?(timed?30:180):e.rest,note:e.note,media:e.media,timed:timed,sug:progSug(e,le,timed),sets:e.sets.map((p,k)=>{const ls=le&&le.sets[k];return {plan:p.reps,int:p.int,rir:p.int==='Rozcvička'?'':p.int==='Cluster'?((ls&&ls.rir)||''):(!String(p.reps||'').trim()&&p.int)||(ls&&ls.rir)||p.int||'',kg:ls&&ls.kg?wnum(ls.kg):'',reps:ls&&!timed?String(ls.reps):'',done:false};})}));})};
   UI.woOpen=null;save();UI.sheet=null;push('workout');toast('Časomíra běží');},
  woset(v){const [i,k]=v.split(':').map(Number);const e=S.active.ex[i],x=e.sets[k];if(!x.done&&!e.timed&&!x.reps&&!parseInt(x.plan)){A.wopad(v);UI.sheet.f='reps';rerender();toast('Zapiš, kolik opakování jsi dal(a)');return;}x.done=!x.done;let up=null;
-  if(!x.done)x.up=false;
+  if(!x.done){x.up=false;if(S.active.lastSet===v)S.active.lastAt=0;}else{S.active.lastAt=Date.now();S.active.lastSet=v;}
   if(x.done){if(!e.timed&&!x.reps)x.reps=String(parseInt(x.plan)||'');const ls=!e.timed&&lastFor(S.cme,exK(e));up=ls?improvement(x,ls.sets[k]):null;x.up=!!up;if(e.rest&&S.restOn!==false){S.active.restUntil=Date.now()+e.rest*1000;S.active.restTotal=e.rest;S.active.restEx=e.name;}}
   if(x.done&&e.sets.every(q=>q.done)){setTimeout(()=>{if(!S.active||current()!=='workout'||UI.sheet)return;const n=S.active.ex.findIndex(q=>q.sets.some(z=>!z.done));if(n>=0&&UI.woOpen!==n){UI.woOpen=n;rerender();}},up?1300:650);}
   save();rerender();if(up)setTimeout(()=>fireAt(app.querySelector('[data-a=woset][data-v="'+i+':'+k+'"]'),up),30);},
@@ -2140,8 +2142,10 @@ function trainerReply(cid,text){
 function trainerComment(sid){setTimeout(()=>{if(!isC())return;const s=S.sessions.find(x=>x.id===sid);if(!s)return;const tx='Viděl jsem tvůj trénink, skvělá práce! 💪 '+(feelOf(s)<=2?'Vidím, že chyběla energie. Dej si pořádný spánek a jídlo, příště to půjde líp.':'Příště můžeme lehce přidat.');s.comments.push({id:uid(),by:'trainer',text:tx,at:new Date().toISOString(),cread:current()==='session:'+sid});save();if(current()==='session:'+sid)rerender();else notify('comment',S.trainer.name.split(' ')[0]+' okomentoval(a) tvůj trénink',tx,'session:'+sid);},7000);}
 /* workout clock: updates the running timer and rest countdown every second */
 /* time comes from the start timestamp, so it stays correct while the phone is locked or the app is in the background */
+function sinceHTML(){const w=S.active;if(!w||S.restOn!==false||!w.lastAt)return '';return '<div class="wosince">'+ic('clock',14,2.2)+'<span>Odpočíváš</span><b class="num" data-tick="since">'+fmtClock(Math.max(0,Math.floor((Date.now()-w.lastAt)/1000)))+'</b></div>';}
 function woTick(){if(!S.authed||!isC()||!S.active)return;const w=S.active;
  app.querySelectorAll('[data-tick=wo]').forEach(el=>el.textContent=fmtClock(elapsed()));
+ if(w.lastAt)app.querySelectorAll('[data-tick=since]').forEach(el=>el.textContent=fmtClock(Math.max(0,Math.floor((Date.now()-w.lastAt)/1000))));
  const d=new Date();app.querySelectorAll('[data-tick=lsclock]').forEach(el=>el.textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0'));
  if(w.restUntil){const r=Math.ceil((w.restUntil-Date.now())/1000);app.querySelectorAll('[data-tick=rest]').forEach(el=>el.textContent=fmtClock(Math.max(0,r)));app.querySelectorAll('[data-tick=restbar]').forEach(el=>el.style.width=(w.restTotal?Math.max(0,r)/w.restTotal*100:0)+'%');
   if(r<=0){w.restUntil=0;save();try{if(navigator.vibrate)navigator.vibrate([200,100,200]);}catch(e){}
