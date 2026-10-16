@@ -519,6 +519,7 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 #cmenu .cm-menu{position:absolute;width:240px;border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.45);animation:cmPop .2s cubic-bezier(.2,.9,.3,1.2)}@keyframes cmPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
 #cmenu .cm-menu button{display:flex;width:100%;align-items:center;justify-content:space-between;padding:0 16px;height:50px;font-size:16px;font-weight:500;color:var(--ink);text-align:left}#cmenu .cm-menu button+button{border-top:1px solid var(--line,rgba(127,127,127,.18))}#cmenu .cm-menu button span{display:flex;opacity:.85}#cmenu .cm-menu button:active{background:rgba(127,127,127,.15)}
 .stopt .strd{width:20px;height:20px;border-radius:50%;border:2px solid var(--ink3);flex:none}.stopt.on .strd{border:6px solid var(--grad,var(--accent))}.stopt.on{box-shadow:inset 0 0 0 1.5px var(--grad,var(--accent))}
+.remindsel{width:auto;min-width:92px;padding:8px 12px;flex:none}
 </style>
 
 <div class="stage">
@@ -1237,6 +1238,16 @@ function scrTrainer(id){
  h+='</div></div>';return h;
 }
 function sw(on,a,v,dis){return '<button class="sw'+(on?' on':'')+'" role="switch" aria-checked="'+(on?'true':'false')+'" data-a="'+a+'" data-v="'+v+'"'+(dis?' disabled':'')+'><i></i></button>';}
+function isIOS(){return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
+function remindCard(){const n=S.cnotif||{},on=!!n.remind,hr=n.remindH==null?8:n.remindH,ios=isIOS()&&!isStandalone();
+ return '<div class="sec"><h3>Připomínka tréninku</h3></div><div class="glass list">'
+ +'<div class="li plain"><span class="iconbtn sm" style="background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)">'+ic('bell',18)+'</span><div class="grow"><div style="font-weight:500">Ráno mi připomeň trénink</div><div class="tiny muted">Upozornění na telefon v den, kdy máš v plánu trénink</div></div>'+sw(on,'remind','x')+'</div>'
+ +'<div class="li plain" style="'+(on?'':'opacity:.45')+'"><div class="grow"><div style="font-weight:500">V kolik hodin</div><div class="tiny muted">Když už ten den odcvičíš, nepřijde nic</div></div><select class="input remindsel" data-in="remindH"'+(on?'':' disabled')+'>'+[5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(x=>'<option value="'+x+'"'+(x===hr?' selected':'')+'>'+x+':00</option>').join('')+'</select></div>'
+ +(on?'<button class="li plain" data-a="remindtest"><span class="grow">Vyzkoušet upozornění</span>'+ic('chev',18)+'</button>':'')
+ +'</div>'+(ios?'<p class="tiny faint" style="margin:-4px 6px 0;line-height:1.45">Na iPhonu upozornění fungují, jen když máš CoachMe přidané na ploše (Sdílet → Přidat na plochu) a iOS 16.4 nebo novější.</p>':'');}
+function pushEnable(){if(!('Notification' in window))return Promise.reject(new Error('unsupported'));return Notification.requestPermission().then(p=>{if(p!=='granted')throw new Error('denied');});}
+function pushSync(){return Promise.resolve();}
 function scrSettings(){
  const cm=isC(),n=cm?S.cnotif:S.notif;
  let h='<div class="view detail" id="view">'+nav('Nastavení')+'<div class="stack"><h1 class="title-xl">Nastavení</h1>';
@@ -1245,6 +1256,7 @@ function scrSettings(){
  h+='<div class="sec"><h3>Jazyk</h3></div><div class="seg glass" translate="no">'+[['cs','Čeština'],['en','English']].map(x=>'<button class="'+((S.lang||'cs')===x[0]?'on':'')+'" data-a="lang" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
  h+='<div class="glass card row" style="gap:16px"><div class="iconprev" style="width:64px;height:64px;border-radius:16px"><img alt="Ikona CoachMe" src="'+ICON+'"></div><div class="grow small muted" style="line-height:1.45">Ikona na ploše má logo s nápisem COACHME. V aplikaci je jen značka CM.</div></div>';
  if(cm)h+='<div class="sec"><h3>Trénink</h3></div><div class="glass list"><div class="li plain"><span class="iconbtn sm" style="background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)">'+ic('clock',18)+'</span><div class="grow"><div style="font-weight:500">Odpočet pauzy</div><div class="tiny muted">Po odškrtnutí série se spustí odpočet mezi sériemi</div></div>'+sw(S.restOn!==false,'resttoggle','x')+'</div></div>';
+ if(cm)h+=remindCard();
  h+='<div class="sec"><h3>Oznámení</h3></div><div class="glass list">'
   +'<div class="li plain"><span class="iconbtn sm" style="background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)">'+ic('bell',18)+'</span><span class="grow" style="font-weight:500">Povolit oznámení</span>'+sw(n.on,'notif','on')+'</div>'
   +(cm?[['plan','Nový trénink','Trenér ti pošle nebo upraví plán'],['message','Nová zpráva','Trenér ti napíše do chatu'],['comment','Komentář k tréninku','Trenér okomentuje tvůj trénink']]:[['workout','Dokončený trénink','Klient dokončí trénink'],['client','Nový klient','Někdo se připojí přes tvůj kód'],['message','Nová zpráva','Klient ti napíše do chatu']]).map(x=>'<div class="li plain" style="'+(n.on?'':'opacity:.45')+'"><div class="grow"><div style="font-weight:500">'+x[1]+'</div><div class="tiny muted">'+x[2]+'</div></div>'+sw(n[x[0]],'notif',x[0],!n.on)+'</div>').join('')+'</div>';
@@ -2126,6 +2138,13 @@ const A={
  repdone(v){const r=S.reports.find(x=>x.id===v);if(!r)return;r.st=r.st==='done'?'new':'done';save();rerender();if(r.st==='done')toast('Označeno jako vyřešené');},
  sendreport(){const r=UI.report;if(r.text.trim().length<5){toast('Napiš prosím krátký popis');const el=document.getElementById('rep-text');if(el)el.focus();return;}
   S.reports.push({id:uid(),kind:r.kind,from:isC()?'client':'trainer',area:r.area,text:r.text.trim(),at:new Date().toISOString(),st:'new'});save();UI.report={kind:'bug',area:'',text:''};pop();toast('Děkujeme, odesláno anonymně');},
+ remind(){const n=S.cnotif;if(n.remind){n.remind=false;save();rerender();pushSync().catch(()=>{});return;}
+  if(isIOS()&&!isStandalone()){toast('Nejdřív si přidej CoachMe na plochu (Sdílet → Přidat na plochu)');return;}
+  pushEnable().then(()=>{n.remind=true;if(n.remindH==null)n.remindH=8;save();rerender();return pushSync().then(()=>toast('Připomínka zapnutá na '+n.remindH+':00'));}).catch(e=>{n.remind=false;save();toast(e&&e.message==='denied'?'Upozornění jsou v telefonu zakázaná. Povol je v nastavení prohlížeče.':e&&e.message==='unsupported'?'Tento prohlížeč upozornění neumí':'Připomínku se nepodařilo zapnout');rerender();});},
+ remindtest(){const t='Dnes máš trénink 💪',o={body:'Klepni a začni',icon:ICON,tag:'coachme-test'};
+  if(!('Notification' in window)||Notification.permission!=='granted'){toast(t+' · Klepni a začni');return;}
+  const go=()=>{try{new Notification(t,o);}catch(_){toast(t+' · Klepni a začni');}};
+  if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)navigator.serviceWorker.getRegistration().then(r=>r?r.showNotification(t,o):go()).catch(go);else go();},
  notif(k){const n=isC()?S.cnotif:S.notif;n[k]=!n[k];save();rerender();},
  notifopen(){const r=UI.notice&&UI.notice.route;UI.notice=null;if(r){UI.sheet=null;if(r.startsWith('client:')){UI.clientSeg='overview';UI.liftSel=null;}push(r);}else rerender();},
  simevent(k){if(k==='client'){const c=addClient();notify('client','Nový klient',c.name+' se připojil(a) přes tvůj kód','client:'+c.id,true);}
@@ -2272,6 +2291,7 @@ app.addEventListener('input',e=>{
  if(k==='q'){UI.q=v;const pos=e.target.selectionStart;rerender();const q=document.getElementById('q');if(q){q.focus();try{q.setSelectionRange(pos,pos);}catch(_){}}return;}
  if(k==='noteDraft'||k==='commentDraft'){UI[k]=v;return;}
  if(k==='liftSel'){UI.liftSel=v;rerender();return;}
+ if(k==='remindH'){S.cnotif.remindH=+v;save();pushSync().then(()=>toast('Připomínka v '+v+':00')).catch(()=>{});return;}
  if(k==='sheetNote'){UI.sheet.note=v;return;}
  if(k.startsWith('wo.')&&S.active){const [,i,j,f]=k.split('.');const x=S.active.ex[+i]&&S.active.ex[+i].sets[+j];if(x){x[f]=v;if(f==='rir')e.target.className='isel sm '+(ICLS[v]||'ip-none');save();}return;}
  if(k==='finNote'){UI.sheet.note=v;return;}

@@ -1291,5 +1291,19 @@
 "Vyber důvod": "Choose a reason",
 "Cvik odebrán z dnešního tréninku": "Exercise removed from today's workout",
 "Cvik je zpátky v tréninku": "Exercise is back in the workout",
-"Vynecháno dnes": "Skipped today"
+"Vynecháno dnes": "Skipped today",
+"Připomínka tréninku": "Workout reminder",
+"Ráno mi připomeň trénink": "Remind me in the morning",
+"Upozornění na telefon v den, kdy máš v plánu trénink": "Phone notification on days you have a planned workout",
+"V kolik hodin": "At what time",
+"Když už ten den odcvičíš, nepřijde nic": "If you've already trained that day, nothing is sent",
+"Vyzkoušet upozornění": "Test notification",
+"Na iPhonu upozornění fungují, jen když máš CoachMe přidané na ploše (Sdílet → Přidat na plochu) a iOS 16.4 nebo novější.": "On iPhone, notifications only work when CoachMe is added to your Home Screen (Share → Add to Home Screen) and iOS 16.4 or later.",
+"Nejdřív si přidej CoachMe na plochu (Sdílet → Přidat na plochu)": "First add CoachMe to your Home Screen (Share → Add to Home Screen)",
+"Upozornění jsou v telefonu zakázaná. Povol je v nastavení prohlížeče.": "Notifications are blocked on this phone. Allow them in browser settings.",
+"Tento prohlížeč upozornění neumí": "This browser doesn't support notifications",
+"Připomínku se nepodařilo zapnout": "Couldn't turn on the reminder",
+"Dnes máš trénink 💪": "You have a workout today 💪",
+"Klepni a začni": "Tap to start",
+"Dnes máš trénink 💪 · Klepni a začni": "You have a workout today 💪 · Tap to start"
 }
