@@ -486,6 +486,12 @@ button,a,input,select,textarea,label{touch-action:manipulation;-webkit-tap-highl
 .prprev{display:flex;justify-content:center}.prprev img{height:min(52vh,460px);width:auto;aspect-ratio:9/16;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .prgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.prgrid button{padding:0;border-radius:12px;overflow:hidden;line-height:0;box-shadow:inset 0 0 0 1px var(--line,rgba(127,127,127,.25));transition:transform .15s}.prgrid button img{width:100%;aspect-ratio:9/16;display:block}.prgrid button.on{box-shadow:0 0 0 2.5px var(--accent);transform:scale(.97)}.prrow{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:2px 2px -2px}
 .wosince{display:flex;align-items:center;gap:8px;margin:-2px 0 0 38px;padding:2px 0;font-size:13px;color:var(--accent)}.wosince span{font-weight:600;color:var(--ink);opacity:.6}.wosince b{font-weight:800;font-variant-numeric:tabular-nums}
+[data-a=open][data-v^="client:"]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;transition:transform .2s}.cm-press{transform:scale(.97)}
+#cmenu{position:fixed;inset:0;z-index:200;animation:cmIn .18s ease-out}#cmenu.out{opacity:0;transition:opacity .15s}@keyframes cmIn{from{opacity:0}to{opacity:1}}
+#cmenu .cm-bg{position:absolute;inset:0;background:rgba(0,0,0,.5);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#cmenu .cm-row{position:absolute;border-radius:22px;transform:scale(1.03);box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden;pointer-events:none}#cmenu .cm-row>*{border:0!important;width:100%}
+#cmenu .cm-menu{position:absolute;width:240px;border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.45);animation:cmPop .2s cubic-bezier(.2,.9,.3,1.2)}@keyframes cmPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+#cmenu .cm-menu button{display:flex;width:100%;align-items:center;justify-content:space-between;padding:0 16px;height:50px;font-size:16px;font-weight:500;color:var(--ink);text-align:left}#cmenu .cm-menu button+button{border-top:1px solid var(--line,rgba(127,127,127,.18))}#cmenu .cm-menu button span{display:flex;opacity:.85}#cmenu .cm-menu button:active{background:rgba(127,127,127,.15)}
 .stopt .strd{width:20px;height:20px;border-radius:50%;border:2px solid var(--ink3);flex:none}.stopt.on .strd{border:6px solid var(--grad,var(--accent))}.stopt.on{box-shadow:inset 0 0 0 1.5px var(--grad,var(--accent))}
 </style>
 
@@ -894,7 +900,7 @@ function scrClient(id){
    +'<div class="glass kpi"><span class="l">Za 30 dní</span><span class="v num" style="font-size:22px">'+ss.filter(s=>daysAgo(s.date)<30).length+'</span></div>'
    +'<div class="glass kpi"><span class="l">Objem 4 týd.</span><span class="v num" style="font-size:22px">'+(vd>=0?'+':'')+vd+' %</span></div></div>';
   h+=ciCard(id);
-  h+=statsBlocks(id,vol);
+  h+='<div id="cstats" style="scroll-margin-top:80px"></div>'+statsBlocks(id,vol);
  }
  if(seg==='sessions'){
   h+=ss.length?'<div class="glass list">'+ss.map(s=>'<button class="li plain" data-a="open" data-v="session:'+s.id+'"><div class="grow"><div class="row" style="gap:6px"><span style="font-weight:500" class="ellip">'+esc(s.title)+'</span>'+(!s.seen?'<span class="dot"></span>':'')+'</div><div class="tiny muted">'+fmtDL(s.date)+' · '+s.dur+' min · '+fmtKg(cv(volume(s)))+' '+U()+'</div></div>'+(s.comments.length?'<span class="pill neutral">'+ic('chat',12,2)+' '+s.comments.length+'</span>':'')+ic('chev',18)+'</button>').join('')+'</div>':'<div class="glass card empty">Klient zatím nemá žádný odcvičený trénink.</div>';
@@ -2037,6 +2043,26 @@ app.addEventListener('click',e=>{
  if(el.tagName==='BUTTON'&&el.type==='submit'&&el.closest('form'))return;
  const a=el.getAttribute('data-a');if(A[a]){e.preventDefault();A[a](el.getAttribute('data-v'));}
 });
+/* long press on a client row: quick menu (message, send workout, progress, profile) */
+let CM=null,cmSkip=0;
+function cmClose(){const o=document.getElementById('cmenu');if(!o)return;o.classList.add('out');setTimeout(()=>o.remove(),160);}
+function cmOpen(row){const id=row.getAttribute('data-v').split(':')[1],c=client(id);if(!c)return;try{if(navigator.vibrate)navigator.vibrate(12);}catch(_){}
+ cmClose();const r=row.getBoundingClientRect(),vh=window.innerHeight,mh=4*50+8,below=r.bottom+12+mh<vh-20,top=below?r.bottom+12:Math.max(20,r.top-12-mh);
+ const o=document.createElement('div');o.id='cmenu';
+ const items=[['chat','Napsat zprávu','chat'],['send','Poslat trénink','assign'],['trend','Pokrok','prog'],['person','Otevřít profil','profile']];
+ o.innerHTML='<div class="cm-bg"></div><div class="cm-row glass strong" style="left:'+(r.left-4)+'px;top:'+(r.top-4)+'px;width:'+(r.width+8)+'px">'+row.outerHTML+'</div>'
+  +'<div class="cm-menu glass strong" style="left:'+Math.min(r.left+36,window.innerWidth-260)+'px;top:'+top+'px">'+items.map(x=>'<button data-cm="'+x[2]+'">'+esc(x[1])+'<span>'+ic(x[0],20)+'</span></button>').join('')+'</div>';
+ o.addEventListener('click',e=>{const b=e.target.closest('[data-cm]');e.preventDefault();e.stopPropagation();cmClose();if(!b)return;const k=b.getAttribute('data-cm');
+  if(k==='chat')A.open('chat:'+id);else if(k==='assign')A.sheet('assign:'+id);else{A.open('client:'+id);if(k==='prog')setTimeout(()=>{const s=document.getElementById('cstats');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});},120);}});
+ document.body.appendChild(o);}
+app.addEventListener('pointerdown',e=>{const row=e.target.closest('[data-a=open][data-v^="client:"]');if(!row||isC()||e.button>0)return;
+ CM={row:row,x:e.clientX,y:e.clientY,t:setTimeout(()=>{if(!CM)return;cmSkip=Date.now();row.classList.remove('cm-press');cmOpen(row);CM=null;},480)};row.classList.add('cm-press');});
+const cmCancel=()=>{if(!CM)return;clearTimeout(CM.t);CM.row.classList.remove('cm-press');CM=null;};
+app.addEventListener('pointermove',e=>{if(CM&&Math.hypot(e.clientX-CM.x,e.clientY-CM.y)>8)cmCancel();});
+['pointerup','pointercancel','pointerleave'].forEach(t=>app.addEventListener(t,cmCancel));
+app.addEventListener('scroll',cmCancel,true);
+app.addEventListener('click',e=>{if(Date.now()-cmSkip<700&&e.target.closest('[data-v^="client:"]')){e.preventDefault();e.stopImmediatePropagation();}},true);
+app.addEventListener('contextmenu',e=>{if(e.target.closest('[data-a=open][data-v^="client:"]'))e.preventDefault();});
 /* swipe to start: drag the lime knob to the end of the track */
 ['woset','wopad','sugyes','plates','woaddset','wouni'].forEach(k=>{const f=A[k];A[k]=function(v){const e=S.active&&S.active.ex[parseInt(v)];return inU(e&&e.u,()=>f.apply(this,arguments));};});
 ['wopadq','wokey','wopadsave','platew','wopadr','wodelset'].forEach(k=>{const f=A[k];A[k]=function(){const e=S.active&&UI.sheet&&S.active.ex[UI.sheet.i];return inU(e&&e.u,()=>f.apply(this,arguments));};});
