@@ -25,7 +25,7 @@ cut('/* ---------- state ---------- */','function save(){',r'''/* ---------- sta
 const KEY='coachme-local-v1';
 const SB_URL='https://iqrtiypkczsarqimbnqj.supabase.co',SB_KEY='sb_publishable_fsdwgYn2Uvw0jtQw2pqcfg_M1m_1tR0';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor','guide','lang'];
+const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor','guide','lang','exFav'];
 function blank(){return {v:7,authed:false,role:'trainer',me:null,cme:null,uid:null,theme:'system',trainers:[],clientsAll:[],templatesAll:[],sessions:[],metrics:[],assign:[],messages:{},notes:{},exCustom:[],reports:[]};}
 let S=blank();
 function loadLocal(){try{const L=JSON.parse(localStorage.getItem(KEY)||'null');if(L)LOCAL_KEYS.forEach(k=>{if(L[k]!==undefined)S[k]=L[k];});}catch(e){}}
@@ -76,7 +76,9 @@ function pick(t,r){const o={};TB[t].cols.forEach(c=>{if(r[c]!==undefined)o[c]=r[
 function ensureBuckets(){S.clientsAll.forEach(c=>{if(!S.messages[c.id])S.messages[c.id]=[];if(!S.notes[c.id])S.notes[c.id]=[];});}
 function materialize(){TABLES.forEach(t=>TB[t].set([...ROWS[t].values()]));ensureBuckets();}
 function snapshot(){TABLES.forEach(t=>{SNAP[t]=new Map(TB[t].get().map(r=>[r.id,stable(r)]));});}
-let flushT=null,flushing=Promise.resolve(),saveErr=0;
+let flushT=null,flushing=Promise.resolve(),saveErr=0;const SOK=new Set();
+function restoreOutbox(){try{const L=JSON.parse(localStorage.getItem(KEY)||'null');const ob=(L&&L.outbox)||[];let n=0;ob.forEach(x=>{if(x&&x.clientId===S.cme&&!S.sessions.some(y=>y.id===x.id)){S.sessions.push(x);n++;}});if(n){scheduleFlush();}}catch(e){}}
+window.addEventListener('online',()=>scheduleFlush());
 function scheduleFlush(){if(!S.authed)return;clearTimeout(flushT);flushT=setTimeout(flushNow,350);}
 function flushNow(){clearTimeout(flushT);flushT=null;if(!S.authed)return flushing;
  const jobs=[];
@@ -86,16 +88,16 @@ function flushNow(){clearTimeout(flushT);flushT=null;if(!S.authed)return flushin
    ROWS[t].set(r.id,Object.assign({},ROWS[t].get(r.id)||{},r));});
   const del=[...SNAP[t].keys()].filter(id=>!seen.has(id));
   del.forEach(id=>{SNAP[t].delete(id);ROWS[t].delete(id);});
-  const fail=(rs,prev)=>e=>{saveErr++;console.error('CoachMe sync',t,e);rs.forEach(r=>SNAP[t].delete(r.id));toast('Nepodařilo se uložit, zkusím to znovu');setTimeout(scheduleFlush,4000);};
+  const fail=(rs,prev)=>e=>{saveErr++;console.error('CoachMe sync',t,e);rs.forEach(r=>SNAP[t].delete(r.id));if(navigator.onLine)toast('Nepodařilo se uložit, zkusím to znovu');setTimeout(scheduleFlush,navigator.onLine?4000:15000);};
   if(t==='trainers'||t==='clients'){[...ins,...upd].forEach(r=>jobs.push(sb.from(t).update({data:r.data}).eq('id',r.id).then(x=>{if(x.error)fail([r])(x.error);})));}
   else if(t==='reports'&&S.role!=='owner'){if(ins.length)jobs.push(sb.from(t).insert(ins).then(x=>{if(x.error)fail(ins)(x.error);}));}
-  else{const all=[...ins,...upd];if(all.length)jobs.push(sb.from(t).upsert(all).then(x=>{if(x.error)fail(all)(x.error);}));}
+  else{const all=[...ins,...upd];if(all.length)jobs.push(sb.from(t).upsert(all).then(x=>{if(x.error)fail(all)(x.error);else if(t==='sessions'){all.forEach(r=>SOK.add(r.id));saveLocal();}}));}
   if(del.length&&!(t==='reports'&&S.role!=='owner'))jobs.push(sb.from(t).delete().in('id',del).then(x=>{if(x.error){console.error('CoachMe delete',t,x.error);}}));
  });
  flushing=Promise.all(jobs);return flushing;}
 async function fetchAll(t){let out=[],from=0;for(;;){const {data,error}=await sb.from(t).select('*').range(from,from+999);if(error)throw error;out=out.concat(data);if(data.length<1000)break;from+=1000;}return out;}
 async function loadAll(){const res=await Promise.all(TABLES.map(t=>fetchAll(t).catch(e=>{console.error('load',t,e);return [];})));
- TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();}
+ TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});ROWS.sessions.forEach((v,k)=>SOK.add(k));materialize();}
 /* live updates from other devices */
 let chan=null;
 function liveRender(){if(!S.authed)return;const ae=document.activeElement,fid=ae&&ae.id,val=ae&&ae.value!==undefined?ae.value:null,pos=ae&&ae.selectionStart;
@@ -135,13 +137,13 @@ async function boot(session){
   else return bootFail('K tomuto e-mailu nepatří žádný účet CoachMe.');}
  if(tr){S.role=tr.is_owner?'owner':'trainer';S.me=uidv;S.cme=null;}else{S.role='client';S.cme=uidv;S.me=cl.trainer_id;}
  if(S.activeFor!==uidv){S.active=null;S.activeFor=uidv;}
- await loadAll();snapshot();subscribe();
+ await loadAll();snapshot();subscribe();if(S.cme)restoreOutbox();
  UI.booting=false;UI.stack=[];UI.tab='home';UI.sheet=null;
- if(fresh){UI.authStep=fresh;S.authed=false;render('push');UI.pendingEnter=true;}else{S.authed=true;render();}
+ if(fresh){UI.authStep=fresh;S.authed=false;render('push');UI.pendingEnter=true;}else{S.authed=true;applyGo();render();}
  saveLocal();}
 function bootFail(msg){bootUid=null;UI.booting=false;S.authed=false;sb.auth.signOut();UI.authStep='welcome';render();toast(msg);}
 function authErr(e){const m=(e&&e.message)||'';return /Invalid login/i.test(m)?'Špatný e-mail nebo heslo':/already registered|already been registered/i.test(m)?'Tento e-mail už má účet. Přihlas se.':/not confirmed/i.test(m)?'Nejdřív potvrď e-mail z odkazu, který ti přišel':/rate|security purposes/i.test(m)?'Moc pokusů za sebou, zkus to prosím za chvíli':/Password should/i.test(m)?'Heslo musí mít alespoň 6 znaků':/valid email|invalid/i.test(m)?'Zkontroluj e-mailovou adresu':'Něco se nepovedlo: '+m;}
-function saveLocal(){try{const L={};LOCAL_KEYS.forEach(k=>L[k]=S[k]);localStorage.setItem(KEY,JSON.stringify(L));}catch(e){}}
+function saveLocal(){try{const L={};LOCAL_KEYS.forEach(k=>L[k]=S[k]);if(S.cme)L.outbox=S.sessions.filter(x=>x.clientId===S.cme&&!SOK.has(x.id));localStorage.setItem(KEY,JSON.stringify(L));}catch(e){}}
 ''')
 rep("function save(){try{const copy=Object.assign({},S);localStorage.setItem(KEY,JSON.stringify(copy));}catch(e){}}","function save(){saveLocal();scheduleFlush();}")
 # remove seed data generators
@@ -221,7 +223,7 @@ s=s[:i]+""" ccodesave(){const code=String(UI.ccode||'').replace(/\\s/g,'').toUpp
     S.me=data.id;await loadAll();snapshot();S.messages[S.cme]=S.messages[S.cme]||[];S.messages[S.cme].push(msgOut({text:'Ahoj, právě jsem se k tobě připojil(a) přes tvůj kód!'}));
     UI.ccode='';UI.ccodeErr='';UI.sheet=null;save();rerender();toast('Připojeno k trenérovi '+data.name);});});},"""+s[j:]
 rep(" logout(){UI.app=isC()?'client':'trainer';S.authed=false;S.role='trainer';S.me='tr1';UI.authStep='welcome';UI.stack=[];UI.tab='home';save();render('pop');}",
- " logout(){flushNow().then(()=>{bootUid=null;UI.app=isC()?'client':'trainer';if(chan){sb.removeChannel(chan);chan=null;}sb.auth.signOut();const keep={};LOCAL_KEYS.forEach(k=>keep[k]=S[k]);S=Object.assign(blank(),keep);bindS();ensureSettings();TABLES.forEach(t=>{ROWS[t]=new Map();SNAP[t]=new Map();});UI.authStep='welcome';UI.stack=[];UI.tab='home';UI.sheet=null;render('pop');});},\n shareinvite(){const el=document.getElementById('invite-text');const text=el?el.textContent:'';const url=location.origin;if(navigator.share){navigator.share({title:'CoachMe',text:text,url:url}).catch(()=>{});}else copy(text+' '+url,'Pozvánka zkopírována');}")
+ " logout(){flushNow().then(()=>S.cnotif&&S.cnotif.remind?(S.cnotif.remind=false,pushSync().catch(()=>{})):0).then(()=>{bootUid=null;UI.app=isC()?'client':'trainer';if(chan){sb.removeChannel(chan);chan=null;}sb.auth.signOut();const keep={};LOCAL_KEYS.forEach(k=>keep[k]=S[k]);S=Object.assign(blank(),keep);bindS();ensureSettings();TABLES.forEach(t=>{ROWS[t]=new Map();SNAP[t]=new Map();});UI.authStep='welcome';UI.stack=[];UI.tab='home';UI.sheet=null;render('pop');});},\n shareinvite(){const el=document.getElementById('invite-text');const text=el?el.textContent:'';const url=inviteURL();if(navigator.share){navigator.share({title:'CoachMe',text:text,url:url}).catch(()=>{});}else copy(text+' '+url,'Pozvánka zkopírována');}")
 # invite sheet: real share instead of simulate
 rep('<button class="btn ink" data-a="simjoin">\'+ic(\'bolt\',18)+\' Simulovat</button></div><span class="tiny faint">„Simulovat“ předvede, jak se nový klient objeví po zadání kódu.</span>','<button class="btn ink" data-a="shareinvite">\'+ic(\'share\',18)+\' Poslat</button></div>')
 rep("Stáhni si ji a při registraci zadej můj kód '+fmtCode(S.trainer.code)+'.","Otevři '+esc(location.host)+', klepni na Klient a při registraci zadej můj kód '+fmtCode(S.trainer.code)+'.")
@@ -235,9 +237,25 @@ rep('<button class="btn ghost block" data-a="lockprev">\'+ic(\'lock\',18)+\' Ná
 i=s.index("function clientReply(cid,text){");j=s.index("/* workout clock:",i)
 s=s[:i]+"function clientReply(){}\nfunction trainerReply(){}\nfunction trainerComment(){}\n"+s[j:]
 
+rep("function pushEnable(){if(!('Notification' in window))return Promise.reject(new Error('unsupported'));return Notification.requestPermission().then(p=>{if(p!=='granted')throw new Error('denied');});}\nfunction pushSync(){return Promise.resolve();}",r"""const VAPID='BD93Ihv2xaGDShtLF6wyuC5wMb9AtJRfC1xxuiYnX6bHLkG1HErQ6xsxwVLIW72ZdVJTAqbvUrXGxUx2BiLLBrs';
+function pushOK(){return 'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;}
+function b64u(s){const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0));}
+async function pushHash(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,40);}
+function pushEnable(){if(!pushOK())return Promise.reject(new Error('unsupported'));return Notification.requestPermission().then(p=>{if(p!=='granted')throw new Error('denied');return navigator.serviceWorker.register('/sw.js');});}
+async function pushCur(){const r=await navigator.serviceWorker.getRegistration('/');return r?r.pushManager.getSubscription():null;}
+async function pushSync(){if(!S.cme||!S.uid||!pushOK())return;const n=S.cnotif||{};
+ if(!n.remind){const c=await pushCur();if(c)await sb.from('push_subs').update({on:false,updated_at:new Date().toISOString()}).eq('id',await pushHash(S.uid+'|'+c.endpoint));return;}
+ const reg=await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready;
+ let c=await reg.pushManager.getSubscription();if(!c)c=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+ let tz='Europe/Prague';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||tz;}catch(_){}
+ const {error}=await sb.from('push_subs').upsert({id:await pushHash(S.uid+'|'+c.endpoint),client_id:S.uid,sub:c.toJSON(),hour:n.remindH==null?8:n.remindH,tz:tz,on:true,updated_at:new Date().toISOString()});if(error)throw error;}""")
+rep("if(S.cme)restoreOutbox();","if(S.cme)restoreOutbox();if(S.cme&&S.cnotif&&S.cnotif.remind)pushSync().catch(()=>{});")
+rep("function refreshData(){return new Promise(r=>setTimeout(r,700));}","function refreshData(){if(!navigator.onLine)return Promise.reject(new Error('offline'));return flushNow().then(()=>loadAll()).then(()=>{snapshot();});}")
 # ---------- start ----------
-rep("\nrender();\n})();\n</script>",r"""
+rep("\napplyInvite();applyGo();render();\n})();\n</script>",r"""
+applyInvite();
 UI.booting=true;render();
+if(UI.invCode)sb.rpc('trainer_by_code',{p_code:UI.invCode}).then(({data})=>{if(data&&!S.authed){UI.invBy=data;render();}});
 sb.auth.onAuthStateChange((ev,session)=>{
  if(ev==='PASSWORD_RECOVERY'){UI.recovery=true;UI.booting=false;S.authed=false;UI.authStep='newpass';render();return;}
  if(UI.recovery)return;
@@ -279,7 +297,7 @@ rep2("return bootFail(/bad code/.test(r.error.message)?","return bootFail(/accou
 # sync hardening: clients write only their own templates/exercises (see ownRows); deleted rows leave local state at once; a reload is snapshotted before anything can flush
 rep2("if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);}",
      "if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);TB[t].set([...ROWS[t].values()]);ensureBuckets();}")
-rep2("TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();}","TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});materialize();snapshot();}")
+rep2("TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});ROWS.sessions.forEach((v,k)=>SOK.add(k));materialize();}","TABLES.forEach((t,i)=>{ROWS[t]=new Map(res[i].map(r=>[r.id,r]));});ROWS.sessions.forEach((v,k)=>SOK.add(k));materialize();snapshot();}")
 # a late boot for a session that was already signed out (e.g. removed account) does nothing
 rep2(" if(bootUid===session.user.id)return;bootUid=session.user.id;"," if(bootUid===session.user.id)return;bootUid=session.user.id;\n if(!(await sb.auth.getSession()).data.session){bootUid=null;return;}")
 open('prod.html','w').write(s)
