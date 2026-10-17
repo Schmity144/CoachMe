@@ -1462,5 +1462,20 @@
 "Uložit změnu": "Save change",
 "Napiš poznámku": "Write a note",
 "Nic nenalezeno": "Nothing found",
-"Cviky z plánu a historie klienta. Jiný najdeš hledáním.": "Exercises from the client's plan and history. Search for others."
+"Cviky z plánu a historie klienta. Jiný najdeš hledáním.": "Exercises from the client's plan and history. Search for others.",
+"Registrace trenéra": "Coach registration",
+"Čekáš na schválení": "Waiting for approval",
+"Každého nového trenéra schvaluje majitel aplikace CoachMe. Jakmile tvoji registraci schválí, aplikace se ti sama otevře a dostaneš kód pro klienty.": "Every new coach is approved by the owner of CoachMe. Once your registration is approved, the app opens by itself and you get your code for clients.",
+"Čeká": "Pending",
+"Chtěl(a) ses připojit jako klient? Odhlas se a zaregistruj se v klientské části s kódem od svého trenéra, ideálně s jiným e-mailem.": "Wanted to join as a client? Log out and sign up in the client part with your coach's code, ideally with a different email.",
+"Zkontrolovat znovu": "Check again",
+"Ukázka: schválit, jako by to udělal majitel": "Demo: approve as the owner would",
+"Zatím čeká na schválení": "Still waiting for approval",
+"⏳ Čekají na schválení": "⏳ Waiting for approval",
+"Schválit": "Approve",
+"Zamítnout": "Reject",
+"Dokud trenéra neschválíš, nefunguje jeho kód a nemůže mít klienty. Zamítnutím se jeho účet zablokuje.": "Until you approve a coach, their code doesn't work and they can't have clients. Rejecting blocks the account.",
+"Nový trenér čeká na schválení": "A new coach is waiting for approval",
+"Registrace schválena. Vítej v CoachMe!": "Registration approved. Welcome to CoachMe!",
+"Schválení se nepovedlo, zkus to znovu": "Approval failed, try again"
 }

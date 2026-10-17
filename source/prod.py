@@ -49,8 +49,8 @@ const byAt=(a,b)=>String(a.data.at||'').localeCompare(String(b.data.at||''));
 function ownRows(list){return (isC()?list.filter(t=>t.cl===S.uid):list.filter(t=>t.tr===S.uid)).map(t=>({id:t.id,trainer_id:isC()?(S.me||null):t.tr,client_id:t.cl||null,data:strip(t,['id','tr','cl'])}));}
 function fromOwnRow(r){const o=Object.assign({},r.data,{id:r.id,tr:r.trainer_id});if(r.client_id)o.cl=r.client_id;return o;}
 const TB={
- trainers:{cols:['id','data'],get:()=>S.trainers.filter(t=>t.id===S.uid).map(t=>({id:t.id,data:strip(t,['id','code','owner'])})),
-  set:rows=>{S.trainers=rows.map(r=>Object.assign({},r.data,{id:r.id,code:r.code,owner:!!r.is_owner}));}},
+ trainers:{cols:['id','data'],get:()=>S.trainers.filter(t=>t.id===S.uid).map(t=>({id:t.id,data:strip(t,['id','code','owner','approved'])})),
+  set:rows=>{S.trainers=rows.map(r=>Object.assign({},r.data,{id:r.id,code:r.code,owner:!!r.is_owner,approved:r.approved!==false}));}},
  clients:{cols:['id','data'],get:()=>S.clientsAll.filter(c=>c.id===S.uid||c.trainerId===S.uid).map(c=>({id:c.id,data:strip(c,['id','trainerId'])})),
   set:rows=>{S.clientsAll=rows.map(r=>Object.assign({},r.data,{id:r.id,trainerId:r.trainer_id}));}},
  templates:{cols:['id','trainer_id','client_id','data'],get:()=>ownRows(S.templatesAll),
@@ -114,7 +114,7 @@ function applyChange(p){const t=p.table;if(!TB[t])return;
  flushNow();
  if(p.eventType==='DELETE'){const id=p.old&&p.old.id;if(!id||!ROWS[t].has(id))return;ROWS[t].delete(id);SNAP[t].delete(id);}
  else{const r=p.new;const prev=ROWS[t].get(r.id);ROWS[t].set(r.id,r);
-  const norm=stable(pick(t,r));if(SNAP[t].get(r.id)===norm&&!(t==='trainers'&&prev&&prev.code!==r.code))return;
+  const norm=stable(pick(t,r));if(SNAP[t].get(r.id)===norm&&!(t==='trainers'&&prev&&(prev.code!==r.code||prev.approved!==r.approved)))return;
   if(t==='clients'&&r.id===S.uid&&r.trainer_id!==S.me){S.me=r.trainer_id;loadAll().then(()=>{snapshot();liveRender();});return;}
   if(p.eventType==='INSERT')liveNotes.push([t,r]);}
  clearTimeout(liveT);liveT=setTimeout(()=>{materialize();snapshot();const ns=liveNotes;liveNotes=[];liveRender();ns.forEach(([t,r])=>liveNotify(t,r));},120);}
@@ -143,6 +143,7 @@ async function boot(session){
  if(S.activeFor!==uidv){S.active=null;S.activeFor=uidv;}
  await loadAll();snapshot();subscribe();if(S.cme)restoreOutbox();
  UI.booting=false;UI.stack=[];UI.tab='home';UI.sheet=null;
+ if(fresh==='code'&&(S.trainers.find(t=>t.id===uidv)||{}).approved===false)fresh=false;
  if(fresh){UI.authStep=fresh;S.authed=false;render('push');UI.pendingEnter=true;}else{S.authed=true;applyGo();render();}
  saveLocal();}
 function bootFail(msg){bootUid=null;UI.booting=false;S.authed=false;sb.auth.signOut();UI.authStep='welcome';render();toast(msg);}
@@ -262,6 +263,8 @@ rep("function vsrc(x){return !x?'':x.startsWith('data:')?x:(BLOBS[x]||'');}","fu
 rep("function voiceSend(cid,blob,dur,wave){const r=new FileReader();r.onload=()=>{(S.messages[cid]=S.messages[cid]||[]).push(msgOut({kind:'voice',src:r.result,dur:Math.round(dur),wave:wave,text:''}));save();render('bottom');\n  if(isC())trainerReply(cid,'Díky, poslechl jsem si to 👍');else clientReply(cid,'Jasně, díky!');};r.readAsDataURL(blob);}",r"""function voiceSend(cid,blob,dur,wave){const ext=/webm/.test(blob.type)?'webm':/ogg/.test(blob.type)?'ogg':'m4a';
  upload(new File([blob],'hlas.'+ext,{type:blob.type||'audio/mp4'})).then(src=>{BLOBS[src]=URL.createObjectURL(blob);(S.messages[cid]=S.messages[cid]||[]).push(msgOut({kind:'voice',src:src,dur:Math.round(dur),wave:wave,text:''}));save();render('bottom');}).catch(e=>toast('Hlasovou zprávu se nepodařilo odeslat. '+(e.message||'')));}""")
 rep("function calUrl(tok){return null;}","function calUrl(tok){return tok?SB_URL+'/functions/v1/kalendar?t='+tok:null;}")
+rep("function approveTrainer(id){const t=S.trainers.find(x=>x.id===id);if(!t)return Promise.resolve(false);t.approved=true;save();return Promise.resolve(true);}","function approveTrainer(id){const t=S.trainers.find(x=>x.id===id);if(!t)return Promise.resolve(false);return sb.rpc('approve_trainer',{p_id:id}).then(({data,error})=>{if(error||!data)return false;t.approved=true;const r=ROWS.trainers.get(id);if(r)r.approved=true;rerender();return true;}).catch(()=>false);}")
+rep("function pendDemo(){return '<button class=\"btn ghost block\" data-a=\"penddemo\" style=\"border-style:dashed\">Ukázka: schválit, jako by to udělal majitel</button>';}","function pendDemo(){return '';}")
 rep("function refreshData(){return new Promise(r=>setTimeout(r,700));}","function refreshData(){if(!navigator.onLine)return Promise.reject(new Error('offline'));return flushNow().then(()=>loadAll()).then(()=>{snapshot();});}")
 # ---------- start ----------
 rep("\napplyInvite();applyGo();render();\n})();\n</script>",r"""

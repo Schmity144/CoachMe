@@ -58,12 +58,13 @@ const auth={
  updateUser(){return Promise.resolve({data:{},error:null});}
 };
 function rpc(name,args){const d=db(),u=uidOf(),s=sess();const norm=c=>String(c||'').replace(/\s/g,'').toUpperCase();
- const tr=c=>tbl(d,'trainers').find(x=>x.code===norm(c));
+ const tr=c=>tbl(d,'trainers').find(x=>x.code===norm(c)&&x.approved!==false);
  let r={data:null,error:null};
  if(name==='book_slot'||name==='cancel_slot'){const a=tbl(d,'slots'),x=a.find(y=>y.id===args.p_id),bk=name==='book_slot';let ok=false;if(x&&(bk?(!x.client_id&&x.trainer_id===myTrainer(d,u)&&new Date(x.data.at)>new Date()):(x.client_id===u&&new Date(x.data.at)-new Date()>12*3600e3))){x.client_id=bk?u:null;put(d);emit('slots','UPDATE',x);ok=true;}r.data=ok;}
   else if(name==='trainer_by_code'){const t=tr(args.p_code);r.data=t?{id:t.id,name:t.data.name,spec:t.data.spec}:null;}
  else if(name==='register_trainer'&&(d.removed||[]).includes(u)){r.error={message:'account removed'};}
- else if(name==='register_trainer'){if(!tbl(d,'trainers').find(x=>x.id===u)){const row={id:u,code:code(),is_owner:false,data:{name:args.p_name||'Trenér',email:s.user.email,spec:args.p_spec||'',bio:'',photo:null,joined:new Date().toISOString()}};tbl(d,'trainers').push(row);put(d);emit('trainers','INSERT',row);}}
+ else if(name==='register_trainer'){if(!tbl(d,'trainers').find(x=>x.id===u)){const row={id:u,code:code(),is_owner:false,approved:localStorage.mockApproval==='1'?false:true,data:{name:args.p_name||'Trenér',email:s.user.email,spec:args.p_spec||'',bio:'',photo:null,joined:new Date().toISOString()}};tbl(d,'trainers').push(row);put(d);emit('trainers','INSERT',row);}}
+ else if(name==='approve_trainer'){if(!isOwner(d,u))r.error={message:'owner only'};else{const t=tbl(d,'trainers').find(x=>x.id===args.p_id);if(t){t.approved=true;put(d);emit('trainers','UPDATE',t);}r.data=!!t;}}
  else if(name==='register_client'){const t=tr(args.p_code);if(!t)r.error={message:'bad code'};else{const row={id:u,trainer_id:t.id,data:{name:args.p_name||'Klient',goal:args.p_goal||'Zatím nevyplněno',email:s.user.email,joined:new Date().toISOString(),target:3,photo:null,status:'active'}};tbl(d,'clients').push(row);put(d);emit('clients','INSERT',row);r.data={id:t.id,name:t.data.name};}}
  else if(name==='change_trainer'){const t=tr(args.p_code);const c=tbl(d,'clients').find(x=>x.id===u);if(!t||!c)r.error={message:'bad code'};else{c.trainer_id=t.id;['templates','exercises'].forEach(k=>tbl(d,k).filter(x=>x.client_id===u).forEach(x=>{x.trainer_id=t.id;emit(k,'UPDATE',x);}));put(d);emit('clients','UPDATE',c);r.data={id:t.id,name:t.data.name};}}
  else if(name==='remove_client'||name==='remove_trainer'){
