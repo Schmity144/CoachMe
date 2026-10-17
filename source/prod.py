@@ -26,7 +26,7 @@ const KEY='coachme-local-v1';
 const SB_URL='https://iqrtiypkczsarqimbnqj.supabase.co',SB_KEY='sb_publishable_fsdwgYn2Uvw0jtQw2pqcfg_M1m_1tR0';
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const LOCAL_KEYS=['theme','units','notif','cnotif','restOn','active','activeFor','guide','lang','exFav'];
-function blank(){return {v:7,authed:false,role:'trainer',me:null,cme:null,uid:null,theme:'system',trainers:[],clientsAll:[],templatesAll:[],sessions:[],metrics:[],assign:[],messages:{},notes:{},exCustom:[],reports:[],slots:[]};}
+function blank(){return {v:7,authed:false,role:'trainer',me:null,cme:null,uid:null,theme:'system',trainers:[],clientsAll:[],templatesAll:[],sessions:[],metrics:[],assign:[],messages:{},notes:{},exCustom:[],reports:[],slots:[],groups:[]};}
 let S=blank();
 function loadLocal(){try{const L=JSON.parse(localStorage.getItem(KEY)||'null');if(L)LOCAL_KEYS.forEach(k=>{if(L[k]!==undefined)S[k]=L[k];});}catch(e){}}
 loadLocal();
@@ -37,7 +37,7 @@ function bindS(){
  Object.defineProperty(S,'templates',{configurable:true,enumerable:false,get(){return S.templatesAll.filter(t=>t.tr===S.me&&!t.cl);},set(v){S.templatesAll=S.templatesAll.filter(t=>t.tr!==S.me||t.cl).concat(v);}});
 }
 bindS();
-function ensureSettings(){if(!S.slots)S.slots=[];if(!S.cnotif)S.cnotif={on:true,plan:true,message:true,comment:true};if(!S.units)S.units='kg';if(!S.notif)S.notif={on:true,workout:true,client:true,message:true};if(!S.exCustom)S.exCustom=[];if(!S.reports)S.reports=[];}
+function ensureSettings(){if(!S.slots)S.slots=[];if(!S.groups)S.groups=[];if(!S.cnotif)S.cnotif={on:true,plan:true,message:true,comment:true};if(!S.units)S.units='kg';if(!S.notif)S.notif={on:true,workout:true,client:true,message:true};if(!S.exCustom)S.exCustom=[];if(!S.reports)S.reports=[];}
 ensureSettings();
 
 /* ---------- Supabase sync ---------- */
@@ -67,6 +67,8 @@ const TB={
   set:rows=>{const o={};rows.slice().sort(byAt).forEach(r=>{(o[r.client_id]=o[r.client_id]||[]).push(Object.assign({},r.data,{id:r.id}));});S.messages=o;}},
  notes:{cols:['id','client_id','trainer_id','data'],get:()=>isC()?[]:Object.keys(S.notes).flatMap(cid=>(S.notes[cid]||[]).map(n=>({id:n.id,client_id:cid,trainer_id:S.uid,data:strip(n,['id'])}))),
   set:rows=>{const o={};rows.slice().sort(byAt).forEach(r=>{(o[r.client_id]=o[r.client_id]||[]).push(Object.assign({},r.data,{id:r.id}));});S.notes=o;}},
+ client_groups:{cols:['id','trainer_id','data'],get:()=>isC()?[]:(S.groups||[]).filter(g=>g.tr===S.uid).map(g=>({id:g.id,trainer_id:g.tr,data:strip(g,['id','tr'])})),
+  set:rows=>{S.groups=rows.map(r=>Object.assign({},r.data,{id:r.id,tr:r.trainer_id}));}},
  slots:{cols:['id','trainer_id','client_id','data'],get:()=>isC()?[]:(S.slots||[]).filter(s=>s.tr===S.uid).map(s=>({id:s.id,trainer_id:s.tr,client_id:s.cl||null,data:strip(s,['id','tr','cl'])})),
   set:rows=>{S.slots=rows.map(r=>Object.assign({},r.data,{id:r.id,tr:r.trainer_id,cl:r.client_id||null}));}},
  reports:{cols:['id','data'],get:()=>S.reports.map(x=>({id:x.id,data:strip(x,['id'])})),

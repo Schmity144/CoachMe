@@ -3,7 +3,7 @@
 const LS=localStorage,SS=sessionStorage;
 const db=()=>JSON.parse(LS.getItem('mockdb')||'{"users":[],"t":{}}');
 const put=d=>LS.setItem('mockdb',JSON.stringify(d));
-const T=['trainers','clients','templates','exercises','sessions','metrics','assignments','messages','notes','reports','slots'];
+const T=['trainers','clients','templates','exercises','sessions','metrics','assignments','messages','notes','reports','slots','client_groups'];
 const sess=()=>JSON.parse(SS.getItem('mocksess')||'null');
 const uidOf=()=>{const s=sess();return s&&s.user.id;};
 function code(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<6;i++)c+=a[Math.floor(Math.random()*a.length)];return c;}
@@ -18,6 +18,7 @@ function visible(d,t,r,u){if(!u)return false;
   case 'notes':return r.trainer_id===u&&isMyClient(d,u,r.client_id);
   case 'reports':return isOwner(d,u);
   case 'slots':return r.trainer_id===u||r.trainer_id===myTrainer(d,u);
+  case 'client_groups':return r.trainer_id===u;
   default:return r.client_id===u||isMyClient(d,u,r.client_id)||(t==='sessions'&&isOwner(d,u));}}
 function writable(d,t,r,u){if(t==='reports')return true;if(t==='slots')return r.trainer_id===u;if(t==='templates'||t==='exercises')return r.trainer_id===u||(r.client_id===u&&(!r.trainer_id||r.trainer_id===myTrainer(d,u)));if(t==='trainers')return r.id===u;if(t==='clients')return r.id===u||r.trainer_id===u;return visible(d,t,r,u);}
 function emit(table,eventType,nw,old){const ev={table,eventType,new:nw,old:old,n:Math.random()};LS.setItem('mockev',JSON.stringify(ev));window.dispatchEvent(new CustomEvent('mockev',{detail:ev}));}
